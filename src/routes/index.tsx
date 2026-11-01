@@ -70,7 +70,7 @@ function TradingTerminal() {
   const [depositRequestId, setDepositRequestId] = useState<string | null>(null)
   const [depositMessage, setDepositMessage] = useState('')
   const [walletBalance, setWalletBalance] = useState<number | null>(null)
-  const mpesaApiBase = (import.meta.env.VITE_MPESA_API_URL || 'https://webazi-digital-solutions.onrender.com').replace(/\\/$/, '')
+  const mpesaApiBase = (import.meta.env.VITE_MPESA_API_URL || 'https://webazi-digital-solutions.onrender.com').replace(/\/$/, '')
 
   const selected = PAIRS.find((pair) => pair.symbol === selectedSymbol) ?? PAIRS[0]
   const { data: trades = [], isLoading: tradesLoading, refetch: refreshTrades, isError: tradesError, error: tradesLoadError } = useQuery({
