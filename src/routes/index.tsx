@@ -70,7 +70,7 @@ function TradingTerminal() {
   const [depositRequestId, setDepositRequestId] = useState<string | null>(null)
   const [depositMessage, setDepositMessage] = useState('')
   const [walletBalance, setWalletBalance] = useState<number | null>(null)
-  const mpesaApiBase = (import.meta.env.VITE_MPESA_API_URL || '').replace(/\\/$/, '')
+  const mpesaApiBase = (import.meta.env.VITE_MPESA_API_URL || 'https://webazi-digital-solutions.onrender.com').replace(/\\/$/, '')
 
   const selected = PAIRS.find((pair) => pair.symbol === selectedSymbol) ?? PAIRS[0]
   const { data: trades = [], isLoading: tradesLoading, refetch: refreshTrades, isError: tradesError, error: tradesLoadError } = useQuery({
@@ -184,7 +184,7 @@ function TradingTerminal() {
     event.preventDefault()
     if (!user) { signIn(); return }
     if (!mpesaApiBase) {
-      toast.error('M-Pesa deposits are not configured yet. Set VITE_MPESA_API_URL in the Forex deployment.')
+      toast.error('M-Pesa payment service is not configured.')
       return
     }
     const amount = Number(depositAmount)
@@ -370,7 +370,7 @@ function TradingTerminal() {
                   </label>
                 </div>
                 <button type="submit" disabled={depositBusy || Boolean(depositRequestId) || !mpesaApiBase} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-xs font-bold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50">{depositBusy ? 'Sending STK prompt…' : depositRequestId ? 'Awaiting M-Pesa confirmation…' : user ? 'Deposit via M-Pesa' : 'Sign in to deposit'}<ArrowUpRight size={15} /></button>
-                {!mpesaApiBase && <p className="text-[10px] text-destructive">Payment API URL is not configured in this deployment.</p>}
+                {!mpesaApiBase && <p className="text-[10px] text-destructive">M-Pesa payment service is not configured.</p>}
                 {!user && <p className="text-[10px] text-muted-foreground">Sign in to deposit into your own wallet.</p>}
               </form>
             </section>
