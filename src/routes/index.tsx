@@ -19,7 +19,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { blink } from '@/blink/client'
+import { apiRequest, clearToken, getToken, setToken } from '@/lib/api'
 import type { SimulatedTradesRow } from '@/lib/db-types'
 
 const PAIRS = [
@@ -61,6 +61,12 @@ function TradingTerminal() {
   const [takeProfit, setTakeProfit] = useState('')
   const [user, setUser] = useState<MarketUser>(null)
   const [authLoading, setAuthLoading] = useState(true)
+  const [authOpen, setAuthOpen] = useState(false)
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login')
+  const [authName, setAuthName] = useState('')
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [authBusy, setAuthBusy] = useState(false)
   const [savingTrade, setSavingTrade] = useState(false)
   const [activeView, setActiveView] = useState<'open' | 'history'>('open')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -78,11 +84,8 @@ function TradingTerminal() {
     enabled: Boolean(user?.id),
     queryFn: async () => {
       if (!user?.id) return []
-      return blink.db.table<SimulatedTradesRow>('simulated_trades').list({
-        where: { userId: user.id },
-        orderBy: { createdAt: 'desc' },
-        limit: 100,
-      })
+      const result = await apiRequest<{ trades: SimulatedTradesRow[] }>('/forex/trades')
+      return result.trades
     },
   })
   const openTrades = trades.filter((trade) => trade.status === 'open')
@@ -109,11 +112,14 @@ function TradingTerminal() {
   }, [selected.tvSymbol, interval])
 
   useEffect(() => {
-    const unsubscribe = blink.auth.onAuthStateChanged((state) => {
-      setUser(state.user)
-      if (!state.isLoading) setAuthLoading(false)
-    })
-    return unsubscribe
+    let active = true
+    const token = getToken()
+    if (!token) { setAuthLoading(false); return }
+    void apiRequest<{ user: NonNullable<MarketUser> }>('/forex/auth/me')
+      .then((result) => { if (active) setUser(result.user) })
+      .catch(() => { clearToken(); if (active) setUser(null) })
+      .finally(() => { if (active) setAuthLoading(false) })
+    return () => { active = false }
   }, [])
 
   useEffect(() => {
@@ -128,9 +134,9 @@ function TradingTerminal() {
         return
       }
       try {
-        const token = await blink.auth.getValidToken()
+        const token = getToken()
         const response = await fetch(`${mpesaApiBase}/forex/wallet`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token || ''}` },
         })
         if (!response.ok) throw new Error('Wallet service unavailable')
         const data = await response.json()
@@ -148,9 +154,9 @@ function TradingTerminal() {
     let active = true
     const checkStatus = async () => {
       try {
-        const token = await blink.auth.getValidToken()
+        const token = getToken()
         const response = await fetch(`${mpesaApiBase}/forex/deposits/${encodeURIComponent(depositRequestId)}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token || ''}` },
         })
         if (!response.ok) return
         const data = await response.json()
@@ -159,7 +165,7 @@ function TradingTerminal() {
           setDepositMessage(`Payment received. Receipt: ${data.receipt || 'confirmed'}`)
           setDepositRequestId(null)
           const walletResponse = await fetch(`${mpesaApiBase}/forex/wallet`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${token || ''}` },
           })
           if (walletResponse.ok) {
             const wallet = await walletResponse.json()
@@ -199,10 +205,10 @@ function TradingTerminal() {
     setDepositBusy(true)
     setDepositMessage('')
     try {
-      const token = await blink.auth.getValidToken()
+      const token = getToken()
       const response = await fetch(`${mpesaApiBase}/forex/deposits/stk-push`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` },
         body: JSON.stringify({ amount, phone: depositPhone }),
       })
       const data = await response.json()
@@ -218,7 +224,27 @@ function TradingTerminal() {
   }
 
   function signIn() {
-    blink.auth.login(window.location.href)
+    setAuthMode('login')
+    setAuthOpen(true)
+  }
+
+  async function submitAuth(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setAuthBusy(true)
+    try {
+      const endpoint = authMode === 'register' ? '/forex/auth/register' : '/forex/auth/login'
+      const result = await apiRequest<{ token: string; user: NonNullable<MarketUser> }>(endpoint, {
+        method: 'POST', body: JSON.stringify({ email: authEmail, password: authPassword, displayName: authName }),
+      })
+      setToken(result.token); setUser(result.user); setAuthOpen(false); setAuthPassword('')
+      toast.success(authMode === 'register' ? 'Your Forex account is ready.' : 'Welcome back.')
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Could not authenticate.') }
+    finally { setAuthBusy(false) }
+  }
+
+  async function signOut() {
+    try { await apiRequest('/forex/auth/logout', { method: 'POST' }) } catch { /* clear local session even if offline */ }
+    clearToken(); setUser(null); setWalletBalance(null); await refreshTrades(); toast.success('You have signed out.')
   }
 
   async function placePaperTrade(event: FormEvent<HTMLFormElement>) {
@@ -244,17 +270,7 @@ function TradingTerminal() {
     }
     setSavingTrade(true)
     try {
-      await blink.db.table<SimulatedTradesRow>('simulated_trades').create({
-        userId: user.id,
-        symbol: selected.symbol,
-        side,
-        quantity,
-        entryPrice: selected.price,
-        stopLoss: stop,
-        takeProfit: target,
-        status: 'open',
-        exitPrice: null,
-      })
+      await apiRequest('/forex/trades', { method: 'POST', body: JSON.stringify({ symbol: selected.symbol, side, quantity, entryPrice: selected.price, stopLoss: stop, takeProfit: target }) })
       await refreshTrades()
       toast.success(`${side === 'buy' ? 'Long' : 'Short'} ${selected.symbol} added to paper positions.`)
     } catch (error) {
@@ -267,10 +283,7 @@ function TradingTerminal() {
   async function closePaperTrade(trade: SimulatedTradesRow) {
     if (!user) return
     try {
-      await blink.db.table<SimulatedTradesRow>('simulated_trades').update(trade.id, {
-        status: 'closed',
-        exitPrice: pairPrice(trade.symbol),
-      })
+      await apiRequest('/forex/trades/' + encodeURIComponent(trade.id) + '/close', { method: 'PATCH', body: JSON.stringify({ exitPrice: pairPrice(trade.symbol) }) })
       await refreshTrades()
       toast.success(`${trade.symbol} paper position closed.`)
     } catch (error) {
@@ -321,7 +334,7 @@ function TradingTerminal() {
                 {authLoading ? (
                   <div className="h-9 w-24 animate-pulse rounded-lg bg-muted" />
                 ) : user ? (
-                  <button onClick={() => void blink.auth.logout()} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition hover:bg-accent">
+                  <button onClick={() => void signOut()} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition hover:bg-accent">
                     <span className="flex size-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">{(user.email?.[0] ?? 'T').toUpperCase()}</span>
                     <span className="hidden max-w-28 truncate sm:block">{user.email ?? 'Trader account'}</span><LogOut size={14} className="text-muted-foreground" />
                   </button>
@@ -439,6 +452,24 @@ function TradingTerminal() {
           </div>
         </div>
       </div>
+      {authOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">Northstar FX account</p><h2 id="auth-title" className="mt-1 text-xl font-semibold">{authMode === 'register' ? 'Create your account' : 'Welcome back'}</h2><p className="mt-1 text-xs text-muted-foreground">Your account is managed securely by Northstar FX.</p></div>
+              <button type="button" onClick={() => setAuthOpen(false)} className="rounded-lg p-2 text-muted-foreground hover:bg-accent" aria-label="Close sign in">✕</button>
+            </div>
+            <form onSubmit={submitAuth} className="space-y-3.5">
+              {authMode === 'register' && <label className="block text-xs font-medium text-muted-foreground">Full name<input required minLength={2} maxLength={80} autoComplete="name" value={authName} onChange={e => setAuthName(e.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-primary" placeholder="Your name" /></label>}
+              <label className="block text-xs font-medium text-muted-foreground">Email address<input required type="email" autoComplete="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-primary" placeholder="you@example.com" /></label>
+              <label className="block text-xs font-medium text-muted-foreground">Password<input required type="password" minLength={authMode === 'register' ? 10 : 1} maxLength={128} autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-primary" placeholder={authMode === 'register' ? 'At least 10 characters' : 'Your password'} /></label>
+              <button disabled={authBusy} type="submit" className="mt-2 w-full rounded-lg bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-105 disabled:opacity-60">{authBusy ? 'Please wait…' : authMode === 'register' ? 'Create account' : 'Sign in'}</button>
+            </form>
+            <p className="mt-5 text-center text-xs text-muted-foreground">{authMode === 'register' ? 'Already have an account?' : 'New to Northstar FX?'} <button type="button" onClick={() => setAuthMode(authMode === 'register' ? 'login' : 'register')} className="font-semibold text-primary hover:underline">{authMode === 'register' ? 'Sign in' : 'Create account'}</button></p>
+            <p className="mt-3 text-center text-[10px] leading-relaxed text-muted-foreground">Use a unique password. Never share your password or M-Pesa PIN with anyone.</p>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
