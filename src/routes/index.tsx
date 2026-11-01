@@ -452,6 +452,24 @@ function TradingTerminal() {
           </div>
         </div>
       </div>
+      {authOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">Northstar FX account</p><h2 id="auth-title" className="mt-1 text-xl font-semibold">{authMode === 'register' ? 'Create your account' : 'Welcome back'}</h2><p className="mt-1 text-xs text-muted-foreground">Your account is managed securely by Northstar FX.</p></div>
+              <button type="button" onClick={() => setAuthOpen(false)} className="rounded-lg p-2 text-muted-foreground hover:bg-accent" aria-label="Close sign in">✕</button>
+            </div>
+            <form onSubmit={submitAuth} className="space-y-3.5">
+              {authMode === 'register' && <label className="block text-xs font-medium text-muted-foreground">Full name<input required minLength={2} maxLength={80} autoComplete="name" value={authName} onChange={e => setAuthName(e.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-primary" placeholder="Your name" /></label>}
+              <label className="block text-xs font-medium text-muted-foreground">Email address<input required type="email" autoComplete="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-primary" placeholder="you@example.com" /></label>
+              <label className="block text-xs font-medium text-muted-foreground">Password<input required type="password" minLength={authMode === 'register' ? 10 : 1} maxLength={128} autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-primary" placeholder={authMode === 'register' ? 'At least 10 characters' : 'Your password'} /></label>
+              <button disabled={authBusy} type="submit" className="mt-2 w-full rounded-lg bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-105 disabled:opacity-60">{authBusy ? 'Please wait…' : authMode === 'register' ? 'Create account' : 'Sign in'}</button>
+            </form>
+            <p className="mt-5 text-center text-xs text-muted-foreground">{authMode === 'register' ? 'Already have an account?' : 'New to Northstar FX?'} <button type="button" onClick={() => setAuthMode(authMode === 'register' ? 'login' : 'register')} className="font-semibold text-primary hover:underline">{authMode === 'register' ? 'Sign in' : 'Create account'}</button></p>
+            <p className="mt-3 text-center text-[10px] leading-relaxed text-muted-foreground">Use a unique password. Never share your password or M-Pesa PIN with anyone.</p>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
