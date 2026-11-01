@@ -23,7 +23,7 @@ On the existing Render web service backed by
 
 ```env
 BLINK_PROJECT_ID=forex-trade-site-gxnqgw8v
-FOREX_ALLOWED_ORIGINS=https://<the-exact-published-forex-app-origin>
+FOREX_ALLOWED_ORIGINS=https://forex-trade-site-gxnqgw8v.blinkusercontent.com
 ```
 
 For local development, append `,http://localhost:3000` to
