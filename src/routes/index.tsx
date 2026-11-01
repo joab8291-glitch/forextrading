@@ -369,7 +369,7 @@ function TradingTerminal() {
                     <input type="tel" required value={depositPhone} onChange={(event) => setDepositPhone(event.target.value)} placeholder="07XXXXXXXX" className="mt-1.5 w-full rounded-lg border border-border bg-card px-3 py-2.5 font-mono text-sm text-foreground outline-none focus:border-primary/70" />
                   </label>
                 </div>
-                <button type="submit" disabled={depositBusy || Boolean(depositRequestId) || !user || !mpesaApiBase} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-xs font-bold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50">{depositBusy ? 'Sending STK prompt…' : depositRequestId ? 'Awaiting M-Pesa confirmation…' : 'Deposit via M-Pesa'}<ArrowUpRight size={15} /></button>
+                <button type="submit" disabled={depositBusy || Boolean(depositRequestId) || !mpesaApiBase} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-xs font-bold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50">{depositBusy ? 'Sending STK prompt…' : depositRequestId ? 'Awaiting M-Pesa confirmation…' : user ? 'Deposit via M-Pesa' : 'Sign in to deposit'}<ArrowUpRight size={15} /></button>
                 {!mpesaApiBase && <p className="text-[10px] text-destructive">Payment API URL is not configured in this deployment.</p>}
                 {!user && <p className="text-[10px] text-muted-foreground">Sign in to deposit into your own wallet.</p>}
               </form>
