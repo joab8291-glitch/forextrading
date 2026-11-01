@@ -8,13 +8,7 @@ Webazi Airtime / USSD transactions.
 
 ### Forex app deployment (Blink project)
 
-Set this build-time variable and redeploy:
-
-```env
-VITE_MPESA_API_URL=https://webazi-digital-solutions.onrender.com
-```
-
-Do not put Daraja consumer credentials or any server API secret in the frontend.
+The app defaults to the existing service URL `https://webazi-digital-solutions.onrender.com`. Set `VITE_MPESA_API_URL` only if you later move the payment API to another host. Do not put Daraja consumer credentials or any server API secret in the frontend.
 
 ### Existing Render service: Webazi Digital Solutions
 
@@ -77,7 +71,6 @@ implemented separately.
 
 Before accepting customer deposits:
 - Set the exact Forex production origin in Render.
-- Set `VITE_MPESA_API_URL` in the Forex app and redeploy it.
 - Confirm the existing Render service has working PostgreSQL and production
   Daraja credentials, and that Safaricom's callback URL is correct.
 - Confirm the existing Safaricom callback IP allowlist still matches the
