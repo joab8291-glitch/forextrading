@@ -64,6 +64,13 @@ function TradingTerminal() {
   const [savingTrade, setSavingTrade] = useState(false)
   const [activeView, setActiveView] = useState<'open' | 'history'>('open')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [depositAmount, setDepositAmount] = useState('1000')
+  const [depositPhone, setDepositPhone] = useState('')
+  const [depositBusy, setDepositBusy] = useState(false)
+  const [depositRequestId, setDepositRequestId] = useState<string | null>(null)
+  const [depositMessage, setDepositMessage] = useState('')
+  const [walletBalance, setWalletBalance] = useState<number | null>(null)
+  const mpesaApiBase = (import.meta.env.VITE_MPESA_API_URL || 'https://webazi-digital-solutions.onrender.com').replace(/\/$/, '')
 
   const selected = PAIRS.find((pair) => pair.symbol === selectedSymbol) ?? PAIRS[0]
   const { data: trades = [], isLoading: tradesLoading, refetch: refreshTrades, isError: tradesError, error: tradesLoadError } = useQuery({
@@ -112,6 +119,103 @@ function TradingTerminal() {
   useEffect(() => {
     if (tradesError) toast.error(tradesLoadError instanceof Error ? tradesLoadError.message : 'Could not load your paper trades.')
   }, [tradesError, tradesLoadError])
+
+  useEffect(() => {
+    let active = true
+    async function loadWallet() {
+      if (!user || !mpesaApiBase) {
+        setWalletBalance(null)
+        return
+      }
+      try {
+        const token = await blink.auth.getValidToken()
+        const response = await fetch(`${mpesaApiBase}/forex/wallet`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!response.ok) throw new Error('Wallet service unavailable')
+        const data = await response.json()
+        if (active) setWalletBalance(Number(data.balanceKes) || 0)
+      } catch {
+        if (active) setWalletBalance(null)
+      }
+    }
+    void loadWallet()
+    return () => { active = false }
+  }, [user?.id, mpesaApiBase])
+
+  useEffect(() => {
+    if (!depositRequestId || !user || !mpesaApiBase) return
+    let active = true
+    const checkStatus = async () => {
+      try {
+        const token = await blink.auth.getValidToken()
+        const response = await fetch(`${mpesaApiBase}/forex/deposits/${encodeURIComponent(depositRequestId)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!response.ok) return
+        const data = await response.json()
+        if (!active) return
+        if (data.status === 'completed') {
+          setDepositMessage(`Payment received. Receipt: ${data.receipt || 'confirmed'}`)
+          setDepositRequestId(null)
+          const walletResponse = await fetch(`${mpesaApiBase}/forex/wallet`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          if (walletResponse.ok) {
+            const wallet = await walletResponse.json()
+            setWalletBalance(Number(wallet.balanceKes) || 0)
+          }
+          toast.success('Your Forex cash wallet has been credited.')
+        } else if (data.status === 'failed') {
+          setDepositMessage(data.error || 'M-Pesa payment was not completed.')
+          setDepositRequestId(null)
+          toast.error('The deposit was not completed.')
+        }
+      } catch {
+        // Keep polling through temporary network interruptions.
+      }
+    }
+    void checkStatus()
+    const timer = window.setInterval(() => { void checkStatus() }, 5000)
+    return () => { active = false; window.clearInterval(timer) }
+  }, [depositRequestId, user?.id, mpesaApiBase])
+
+  async function startDeposit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!user) { signIn(); return }
+    if (!mpesaApiBase) {
+      toast.error('M-Pesa payment service is not configured.')
+      return
+    }
+    const amount = Number(depositAmount)
+    if (!Number.isSafeInteger(amount) || amount < 100 || amount > 100000) {
+      toast.error('Enter a whole KES amount between 100 and 100,000.')
+      return
+    }
+    if (!depositPhone.trim()) {
+      toast.error('Enter the M-Pesa phone number to charge.')
+      return
+    }
+    setDepositBusy(true)
+    setDepositMessage('')
+    try {
+      const token = await blink.auth.getValidToken()
+      const response = await fetch(`${mpesaApiBase}/forex/deposits/stk-push`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ amount, phone: depositPhone }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Could not start M-Pesa payment.')
+      setDepositRequestId(data.merchantRequestId)
+      setDepositMessage(data.customerMessage || 'STK prompt sent. Enter your M-Pesa PIN to complete the deposit.')
+      toast.success('M-Pesa payment prompt sent to your phone.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not start the deposit.')
+    } finally {
+      setDepositBusy(false)
+    }
+  }
 
   function signIn() {
     blink.auth.login(window.location.href)
@@ -246,6 +350,30 @@ function TradingTerminal() {
                 <div><div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Virtual buying power</div><div className="font-mono text-sm font-semibold text-foreground">$100,000.00 <span className="text-[10px] font-normal text-muted-foreground">PAPER</span></div></div>
               </div>
             </div>
+
+            <section className="mb-5 grid gap-4 rounded-2xl border border-border/80 bg-card p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)] sm:p-5">
+              <div className="flex flex-col justify-center">
+                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary"><Wallet size={14} /> Real cash wallet · KES</div>
+                <div className="mt-2 font-mono text-3xl font-semibold tracking-tight">{walletBalance === null ? '—' : `KES ${walletBalance.toLocaleString('en-KE')}`}</div>
+                <p className="mt-1.5 max-w-md text-xs leading-relaxed text-muted-foreground">Deposits are recorded separately from practice capital. Your $100,000 paper balance and simulated trades are not real-money trading.</p>
+                {depositMessage && <p aria-live="polite" className="mt-3 rounded-lg bg-primary/5 px-3 py-2 text-xs text-foreground">{depositMessage}</p>}
+                {depositRequestId && <p className="mt-2 text-[10px] text-muted-foreground">Waiting for M-Pesa confirmation… This panel checks payment status automatically.</p>}
+              </div>
+              <form onSubmit={startDeposit} className="grid content-center gap-3 rounded-xl border border-border/70 bg-background/65 p-3.5 sm:p-4">
+                <div><h2 className="text-sm font-semibold">Deposit with M-Pesa</h2><p className="mt-0.5 text-[11px] text-muted-foreground">KES 100–100,000 · Safaricom STK Push</p></div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <label className="text-[10px] font-medium text-muted-foreground">Amount (KES)
+                    <input type="number" min="100" max="100000" step="1" required value={depositAmount} onChange={(event) => setDepositAmount(event.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-card px-3 py-2.5 font-mono text-sm text-foreground outline-none focus:border-primary/70" />
+                  </label>
+                  <label className="text-[10px] font-medium text-muted-foreground">M-Pesa number
+                    <input type="tel" required value={depositPhone} onChange={(event) => setDepositPhone(event.target.value)} placeholder="07XXXXXXXX" className="mt-1.5 w-full rounded-lg border border-border bg-card px-3 py-2.5 font-mono text-sm text-foreground outline-none focus:border-primary/70" />
+                  </label>
+                </div>
+                <button type="submit" disabled={depositBusy || Boolean(depositRequestId) || !mpesaApiBase} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-xs font-bold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50">{depositBusy ? 'Sending STK prompt…' : depositRequestId ? 'Awaiting M-Pesa confirmation…' : user ? 'Deposit via M-Pesa' : 'Sign in to deposit'}<ArrowUpRight size={15} /></button>
+                {!mpesaApiBase && <p className="text-[10px] text-destructive">M-Pesa payment service is not configured.</p>}
+                {!user && <p className="text-[10px] text-muted-foreground">Sign in to deposit into your own wallet.</p>}
+              </form>
+            </section>
 
             <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
               <Metric label="Market" value="Forex" sub="Global currency pairs" icon={<Activity size={15} />} />

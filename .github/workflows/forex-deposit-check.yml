@@ -1,0 +1,22 @@
+name: Forex deposit frontend checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "package.json"
+      - "vite.config.ts"
+      - ".github/workflows/forex-deposit-check.yml"
+  push:
+    branches: [feat/forex-mpesa-deposits]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun run build
+      - run: bun run lint:types
