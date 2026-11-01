@@ -17,12 +17,16 @@ On the existing Render web service backed by
 
 ```env
 BLINK_PROJECT_ID=forex-trade-site-gxnqgw8v
-FOREX_ALLOWED_ORIGINS=https://forex-trade-site-gxnqgw8v.blinkusercontent.com
+FOREX_ALLOWED_ORIGINS=https://forex-trade-site-gxnqgw8v.blinkusercontent.com  # protected preview origin
 ```
 
 For local development, append `,http://localhost:3000` to
-`FOREX_ALLOWED_ORIGINS`. Use the exact browser origin including scheme and
-custom port; do not add a path or trailing slash.
+`FOREX_ALLOWED_ORIGINS`. The Blink project URL currently resolves to a protected preview at
+`https://forex-trade-site-gxnqgw8v.blinkusercontent.com`. That preview origin is
+allowlisted now. After you publish the app from the Blink dashboard, add the
+exact public production origin to this comma-separated variable as well. Use
+the exact browser origin including scheme and custom port; do not add a path or
+trailing slash.
 
 Keep the existing Daraja variables unchanged:
 `DATABASE_URL`, `MPESA_BASE_URL`, `MPESA_SHORTCODE`, `MPESA_PASSKEY`,
