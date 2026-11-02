@@ -234,7 +234,7 @@ function TradingTerminal() {
     try {
       const endpoint = authMode === 'register' ? '/forex/auth/register' : '/forex/auth/login'
       const result = await apiRequest<{ token: string; user: NonNullable<MarketUser> }>(endpoint, {
-        method: 'POST', body: JSON.stringify({ email: authEmail, password: authPassword, displayName: authName }),
+        method: 'POST', body: JSON.stringify({ email: authEmail.trim(), password: authPassword, displayName: authName.trim() }),
       })
       setToken(result.token); setUser(result.user); setAuthOpen(false); setAuthPassword('')
       toast.success(authMode === 'register' ? 'Your Forex account is ready.' : 'Welcome back.')
@@ -374,7 +374,57 @@ function TradingTerminal() {
         </div>
       </div>
 
-      {authOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="auth-title"><div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl"><div className="mb-5 flex items-start justify-between"><div><p className="text-[9px] font-semibold uppercase tracking-widest text-primary">Northstar FX account</p><h2 id="auth-title" className="mt-1 text-xl font-semibold">{authMode==='register'?'Create your account':'Welcome back'}</h2></div><button onClick={()=>setAuthOpen(false)} aria-label="Close" className="text-muted-foreground">✕</button></div><form onSubmit={submitAuth} className="space-y-3">{authMode==='register'&&<label className="block text-xs text-muted-foreground">Full name<input required minLength={2} maxLength={80} value={authName} onChange={e=>setAuthName(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground"/></label>}<label className="block text-xs text-muted-foreground">Email<input required type="email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground"/></label><label className="block text-xs text-muted-foreground">Password<input required type="password" minLength={authMode==='register'?10:1} value={authPassword} onChange={e=>setAuthPassword(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground"/></label><button disabled={authBusy} className="w-full rounded-md bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">{authBusy?'Please wait…':authMode==='register'?'Create account':'Sign in'}</button></form><p className="mt-4 text-center text-xs text-muted-foreground">{authMode==='register'?'Already registered?':'New to Northstar FX?'} <button onClick={()=>setAuthMode(authMode==='register'?'login':'register')} className="font-semibold text-primary">{authMode==='register'?'Sign in':'Create account'}</button></p></div></div>}
+      {authOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/75 px-4 py-6 backdrop-blur-sm sm:items-center sm:py-8"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="auth-title"
+          onMouseDown={(event) => { if (event.target === event.currentTarget) setAuthOpen(false) }}
+        >
+          <section className="my-auto max-h-[calc(100dvh-3rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8">
+            <div className="mb-7 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Northstar FX account</p>
+                <h2 id="auth-title" className="mt-2 text-2xl font-semibold tracking-tight">
+                  {authMode === 'register' ? 'Create your account' : 'Welcome back'}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {authMode === 'register' ? 'Create an account to save and manage your practice positions.' : 'Sign in to access your paper-trading account and wallet.'}
+                </p>
+              </div>
+              <button type="button" onClick={() => setAuthOpen(false)} aria-label="Close sign-in dialog" className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border text-lg text-muted-foreground transition hover:bg-accent hover:text-foreground">×</button>
+            </div>
+            <form onSubmit={submitAuth} className="space-y-5">
+              {authMode === 'register' && (
+                <label className="block space-y-2 text-sm font-medium text-foreground">
+                  Full name
+                  <input required minLength={2} maxLength={80} autoComplete="name" value={authName} onChange={e => setAuthName(e.target.value)} className="w-full rounded-lg border border-border bg-background px-4 py-3 text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Your full name" />
+                </label>
+              )}
+              <label className="block space-y-2 text-sm font-medium text-foreground">
+                Email address
+                <input required type="email" autoComplete="email" inputMode="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} className="w-full rounded-lg border border-border bg-background px-4 py-3 text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="you@example.com" />
+              </label>
+              <label className="block space-y-2 text-sm font-medium text-foreground">
+                Password
+                <input required type="password" minLength={authMode === 'register' ? 10 : 1} autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="w-full rounded-lg border border-border bg-background px-4 py-3 text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder={authMode === 'register' ? 'At least 10 characters' : 'Enter your password'} />
+                {authMode === 'register' && <span className="block text-xs font-normal leading-relaxed text-muted-foreground">Use at least 10 characters.</span>}
+              </label>
+              <button type="submit" disabled={authBusy} className="w-full rounded-lg bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60">
+                {authBusy ? 'Please wait…' : authMode === 'register' ? 'Create account' : 'Sign in'}
+              </button>
+            </form>
+            <p className="mt-6 border-t border-border pt-5 text-center text-sm leading-relaxed text-muted-foreground">
+              {authMode === 'register' ? 'Already registered?' : 'New to Northstar FX?'}
+              {' '}
+              <button type="button" onClick={() => { setAuthMode(authMode === 'register' ? 'login' : 'register'); setAuthPassword('') }} className="font-semibold text-primary hover:underline">
+                {authMode === 'register' ? 'Sign in' : 'Create account'}
+              </button>
+            </p>
+          </section>
+        </div>
+      )}
     </main>
   )
 }
