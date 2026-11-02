@@ -19,9 +19,6 @@ import {
   SlidersHorizontal,
   Wallet,
   X,
-  Mail,
-  LockKeyhole,
-  UserRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { apiRequest, clearToken, getToken, setToken } from '@/lib/api'
@@ -375,64 +372,57 @@ function TradingTerminal() {
 
       {authOpen && createPortal(
         <div
-          style={{ position: 'fixed', inset: 0, zIndex: 2147483647, width: '100vw', height: '100vh', minHeight: '100dvh', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', padding: 'max(18px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom))', background: 'radial-gradient(ellipse at 50% 0%, rgba(14,165,233,0.20), transparent 48%), rgba(2,6,23,0.94)', backdropFilter: 'blur(12px)' }}
+          style={{ position: 'fixed', inset: 0, zIndex: 2147483647, width: '100vw', height: '100vh', minHeight: '100dvh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', padding: 'max(40px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom))', background: '#0d1117', color: '#e6edf3', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif' }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="auth-title"
-          onMouseDown={(event) => { if (event.target === event.currentTarget) setAuthOpen(false) }}
+          onKeyDown={(event) => { if (event.key === 'Escape') setAuthOpen(false) }}
         >
-          <section style={{ position: 'relative', width: '100%', maxWidth: 520, maxHeight: 'calc(100dvh - 36px)', flexShrink: 0, overflowY: 'auto', overflowX: 'hidden', margin: 'auto', padding: 'clamp(24px, 5vw, 38px)', boxSizing: 'border-box', borderRadius: 30, border: '1px solid rgba(148,163,184,0.24)', background: 'linear-gradient(155deg, #172337 0%, #0d1728 48%, #0a1220 100%)', color: '#f8fafc', boxShadow: '0 32px 110px rgba(0,0,0,0.72), 0 0 0 1px rgba(56,189,248,0.08)' }}>
-            <div style={{ position: 'absolute', inset: '0 0 auto 0', height: 4, background: 'linear-gradient(90deg, #22d3ee, #3b82f6, #a78bfa)' }} />
-            <div className="mb-8 flex items-start justify-between gap-4">
-              <div>
-                <div className="mb-6 flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-2xl border border-cyan-300/25 bg-cyan-300/10 text-cyan-300 shadow-lg shadow-cyan-950/30"><Activity size={24}/></div>
-                  <div>
-                    <p className="text-sm font-black tracking-[0.16em] text-white">NORTHSTAR <span className="text-cyan-300">FX</span></p>
-                    <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Markets workspace</p>
-                  </div>
-                </div>
-                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-300">{authMode === 'register' ? 'Get started' : 'Secure account access'}</p>
-                <h2 id="auth-title" className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                  {authMode === 'register' ? 'Create your account' : 'Welcome back'}
-                </h2>
-                <p className="mt-3 max-w-md text-base leading-relaxed text-slate-300">
-                  {authMode === 'register' ? 'Set up your account to save trades, track your progress and manage your wallet.' : 'Sign in to continue to your trading workspace, positions and wallet.'}
-                </p>
+          <button type="button" onClick={() => setAuthOpen(false)} aria-label="Close sign-in dialog" style={{ position: 'fixed', top: 16, right: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 6, border: '1px solid #30363d', background: '#161b22', color: '#8b949e', cursor: 'pointer' }}><X size={18}/></button>
+
+          <div style={{ display: 'flex', width: 64, height: 64, alignItems: 'center', justifyContent: 'center', borderRadius: 9999, background: '#e6edf3', color: '#0d1117', marginTop: 8 }}><Activity size={36} strokeWidth={2.5}/></div>
+
+          <h1 id="auth-title" style={{ margin: '24px 0 16px', fontSize: 24, fontWeight: 300, letterSpacing: '-0.3px', textAlign: 'center', color: '#e6edf3' }}>
+            {authMode === 'register' ? 'Create your Northstar FX account' : 'Sign in to Northstar FX'}
+          </h1>
+
+          <form onSubmit={submitAuth} style={{ width: '100%', maxWidth: 340, boxSizing: 'border-box', padding: 16, borderRadius: 6, border: '1px solid #30363d', background: '#161b22' }}>
+            {authMode === 'register' && (
+              <div style={{ marginBottom: 16 }}>
+                <label htmlFor="auth-name" style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 400, color: '#e6edf3' }}>Full name</label>
+                <input id="auth-name" required minLength={2} maxLength={80} autoComplete="name" value={authName} onChange={e => setAuthName(e.target.value)} className="gh-input" />
               </div>
-              <button type="button" onClick={() => setAuthOpen(false)} aria-label="Close sign-in dialog" className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 transition hover:border-cyan-300/40 hover:bg-white/10 hover:text-white"><X size={19}/></button>
+            )}
+            <div style={{ marginBottom: 16 }}>
+              <label htmlFor="auth-email" style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 400, color: '#e6edf3' }}>{authMode === 'register' ? 'Email address' : 'Username or email address'}</label>
+              <input id="auth-email" required type="email" autoFocus autoComplete="email" inputMode="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} className="gh-input" />
             </div>
-            <form onSubmit={submitAuth} className="space-y-5">
-              {authMode === 'register' && (
-                <label className="block space-y-2.5 text-sm font-semibold text-slate-200">
-                  <span className="flex items-center gap-2"><UserRound size={16} className="text-cyan-300"/>Full name</span>
-                  <input required minLength={2} maxLength={80} autoComplete="name" value={authName} onChange={e => setAuthName(e.target.value)} className="w-full rounded-2xl border border-slate-600/70 bg-slate-950/55 px-4 py-4 text-base text-white outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-cyan-300 focus:ring-4 focus:ring-cyan-300/10" placeholder="Enter your full name" />
-                </label>
-              )}
-              <label className="block space-y-2.5 text-sm font-semibold text-slate-200">
-                <span className="flex items-center gap-2"><Mail size={16} className="text-cyan-300"/>Email address</span>
-                <input required type="email" autoComplete="email" inputMode="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} className="w-full rounded-2xl border border-slate-600/70 bg-slate-950/55 px-4 py-4 text-base text-white outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-cyan-300 focus:ring-4 focus:ring-cyan-300/10" placeholder="name@example.com" />
-              </label>
-              <label className="block space-y-2.5 text-sm font-semibold text-slate-200">
-                <span className="flex items-center gap-2"><LockKeyhole size={16} className="text-cyan-300"/>Password</span>
-                <input required type="password" minLength={authMode === 'register' ? 10 : 1} autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="w-full rounded-2xl border border-slate-600/70 bg-slate-950/55 px-4 py-4 text-base text-white outline-none transition placeholder:text-slate-500 hover:border-slate-500 focus:border-cyan-300 focus:ring-4 focus:ring-cyan-300/10" placeholder={authMode === 'register' ? 'Create a password (10+ characters)' : 'Enter your password'} />
-                {authMode === 'register' && <span className="block text-xs font-normal text-slate-400">Use at least 10 characters.</span>}
-              </label>
-              <button type="submit" disabled={authBusy} className="flex min-h-[60px] w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-600 px-5 py-4 text-base font-extrabold text-slate-950 shadow-xl shadow-sky-950/40 transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cyan-300/30 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60">
-                {authBusy ? 'Please wait…' : <><LogIn size={19} strokeWidth={2.5}/>{authMode === 'register' ? 'Create account' : 'Sign in securely'}</>}
-              </button>
-            </form>
-            <div className="mt-7 border-t border-white/10 pt-6 text-center">
-              <p className="text-sm text-slate-400">
-                {authMode === 'register' ? 'Already have an account?' : 'New to Northstar FX?'}
-                {' '}
-                <button type="button" onClick={() => { setAuthMode(authMode === 'register' ? 'login' : 'register'); setAuthPassword('') }} className="font-bold text-cyan-300 transition hover:text-white hover:underline">
-                  {authMode === 'register' ? 'Sign in' : 'Create an account'}
-                </button>
-              </p>
-              <p className="mt-5 flex items-center justify-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500"><ShieldCheck size={13} className="text-emerald-400"/> Secure access · Practice trading</p>
+            <div style={{ marginBottom: 16 }}>
+              <label htmlFor="auth-password" style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 400, color: '#e6edf3' }}>Password</label>
+              <input id="auth-password" required type="password" minLength={authMode === 'register' ? 10 : 1} autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="gh-input" />
+              {authMode === 'register' && <p style={{ margin: '6px 0 0', fontSize: 12, color: '#8b949e' }}>Use at least 10 characters.</p>}
             </div>
-          </section>
+            <button type="submit" disabled={authBusy} className="gh-button">
+              {authBusy ? 'Please wait…' : authMode === 'register' ? 'Create account' : 'Sign in'}
+            </button>
+          </form>
+
+          <div style={{ width: '100%', maxWidth: 340, boxSizing: 'border-box', marginTop: 16, padding: 16, borderRadius: 6, border: '1px solid #30363d', textAlign: 'center', fontSize: 14, color: '#e6edf3' }}>
+            {authMode === 'register' ? 'Already have an account?' : 'New to Northstar FX?'}
+            {' '}
+            <button type="button" onClick={() => { setAuthMode(authMode === 'register' ? 'login' : 'register'); setAuthPassword('') }} style={{ padding: 0, border: 0, background: 'none', color: '#4493f8', font: 'inherit', cursor: 'pointer' }} className="hover:underline">
+              {authMode === 'register' ? 'Sign in' : 'Create an account'}
+            </button>
+          </div>
+
+          <style>{`
+            .gh-input { display: block; width: 100%; box-sizing: border-box; height: 40px; padding: 5px 12px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: #e6edf3; font-size: 16px; line-height: 20px; outline: none; transition: border-color .1s, box-shadow .1s; }
+            .gh-input:focus { border-color: #1f6feb; box-shadow: inset 0 0 0 1px #1f6feb; }
+            .gh-button { display: block; width: 100%; height: 40px; border-radius: 6px; border: 1px solid rgba(240,246,252,0.1); background: #238636; color: #fff; font-size: 16px; font-weight: 500; cursor: pointer; transition: background .1s; }
+            .gh-button:hover:not(:disabled) { background: #2ea043; }
+            .gh-button:focus-visible { outline: 2px solid #1f6feb; outline-offset: -2px; }
+            .gh-button:disabled { cursor: not-allowed; opacity: .6; }
+          `}</style>
         </div>,
         document.body,
       )}
