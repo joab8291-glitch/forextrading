@@ -205,3 +205,53 @@ import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9.
   ::-webkit-scrollbar-thumb { background: var(--border); border: 2px solid var(--background); border-radius: 999px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
 }
+
+
+/* Readability pass: consistent rhythm and legible labels across the terminal. */
+@layer base {
+  .terminal-shell {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .terminal-shell p,
+  .terminal-shell label,
+  .terminal-shell a,
+  .terminal-shell button {
+    line-height: 1.5;
+  }
+  .terminal-shell h1,
+  .terminal-shell h2,
+  .terminal-shell h3 {
+    line-height: 1.25;
+  }
+}
+
+/* The compact data labels were too small and visually crowded on desktop and mobile. */
+@layer utilities {
+  .terminal-shell [class*="text-[9px]"] {
+    font-size: 0.6875rem !important;
+    line-height: 1.45 !important;
+  }
+  .terminal-shell [class*="text-[10px]"] {
+    font-size: 0.75rem !important;
+    line-height: 1.5 !important;
+  }
+  .terminal-shell [class*="text-[11px]"] {
+    font-size: 0.8125rem !important;
+    line-height: 1.5 !important;
+  }
+  .terminal-shell [class*="text-xs"] {
+    line-height: 1.55;
+  }
+  .terminal-shell nav a,
+  .terminal-shell nav button {
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .terminal-shell .chart-grid {
+    min-height: 420px;
+  }
+}
