@@ -127,6 +127,20 @@ function TradingTerminal() {
   }, [])
 
   useEffect(() => {
+    if (!authOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !authBusy) setAuthOpen(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [authOpen, authBusy])
+
+  useEffect(() => {
     if (tradesError) toast.error(tradesLoadError instanceof Error ? tradesLoadError.message : 'Could not load your paper trades.')
   }, [tradesError, tradesLoadError])
 
@@ -413,11 +427,11 @@ function TradingTerminal() {
               </label>
               <label className="block space-y-2 text-sm font-medium text-foreground">
                 <span className="flex items-center gap-2"><LockKeyhole size={14} className="text-primary"/>Password</span>
-                <input required type="password" minLength={authMode === 'register' ? 10 : 1} autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="w-full rounded-lg border border-border bg-background px-4 py-3 text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder={authMode === 'register' ? 'At least 10 characters' : 'Enter your password'} />
+                <input required type="password" minLength={authMode === 'register' ? 10 : 1} autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="w-full rounded-xl border border-border/90 bg-background/80 px-4 py-3.5 text-base text-foreground outline-none transition duration-200 placeholder:text-muted-foreground/80 hover:border-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/15" placeholder={authMode === 'register' ? 'At least 10 characters' : 'Enter your password'} />
                 {authMode === 'register' && <span className="block text-xs font-normal leading-relaxed text-muted-foreground">Use at least 10 characters.</span>}
               </label>
               <button type="submit" disabled={authBusy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/10 transition duration-200 hover:-translate-y-0.5 hover:brightness-105 hover:shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">
-                {authBusy ? 'Please wait…' : authMode === 'register' ? 'Create account' : 'Sign in'}
+                {authBusy ? 'Please wait…' : authMode === 'register' ? 'Create account' : 'Sign in securely'}
               </button>
             </form>
             <p className="mt-6 border-t border-border pt-5 text-center text-sm leading-relaxed text-muted-foreground">
