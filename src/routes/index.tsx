@@ -395,7 +395,12 @@ function TradingTerminal() {
               <Metric label="Session" value="24 / 5" sub="Market hours vary by venue" icon={<Clock3 size={15} />} />
             </section>
 
-            <section aria-label="Market workspace" className="mb-8">\n              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">\n                <div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Market workspace</p><h2 className="mt-1 text-lg font-semibold tracking-tight">Chart &amp; order entry</h2></div>\n                <p className="text-[11px] text-muted-foreground">Review the market, then practise with a simulated order.</p>\n              </div>\n              <div className="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:gap-6">
+            <section aria-label="Market workspace" className="mb-8">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Market workspace</p><h2 className="mt-1 text-lg font-semibold tracking-tight">Chart &amp; order entry</h2></div>
+                <p className="text-[11px] text-muted-foreground">Review the market, then practise with a simulated order.</p>
+              </div>
+              <div className="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:gap-6">
               <section className="min-w-0 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-md">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-4 sm:px-5">
                   <div className="flex items-center gap-3">
