@@ -14,7 +14,7 @@ export const Route = createRootRoute({
       { name: 'viewport', content: 'width=device-width, initial-scale=1.0' },
       { title: 'Northstar FX · Forex Practice Terminal' },
       { name: 'description', content: 'Explore forex markets, practise trades and manage your account with Northstar FX.' },
-      { name: 'theme-color', content: '#0a0a0a' },
+      { name: 'theme-color', content: '#0a1020' },
       { property: 'og:type', content: 'website' },
       { property: 'og:title', content: 'Northstar FX' },
       { property: 'og:description', content: 'Forex market practice terminal.' },

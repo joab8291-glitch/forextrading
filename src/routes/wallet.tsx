@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ArrowLeft, ArrowUpRight, Wallet } from 'lucide-react'
+import { ArrowUpRight, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { getToken } from '@/lib/api'
+import { PageFrame } from '@/components/SiteHeader'
 
 export const Route = createFileRoute('/wallet')({ component: WalletPage })
 
@@ -78,14 +79,50 @@ function WalletPage() {
     finally { setBusy(false) }
   }
 
-  return <main className="min-h-dvh bg-background text-foreground">
-    <header className="flex h-14 items-center justify-between border-b border-border px-4 sm:px-8"><Link to="/" className="flex items-center gap-2 text-sm font-semibold"><ArrowLeft size={16}/> Back to charts</Link><span className="font-mono text-xs font-bold tracking-widest">NORTHSTAR <span className="text-primary">FX</span></span></header>
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-8">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">Account</p><h1 className="mt-2 text-3xl font-semibold tracking-tight">Cash wallet</h1><p className="mt-2 max-w-xl text-sm text-muted-foreground">Manage your KES cash wallet and fund it securely through an M-Pesa STK Push.</p>
-      <div className="mt-8 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="rounded-xl border border-border bg-card p-6"><div className="flex items-center gap-2 text-xs text-muted-foreground"><Wallet size={15} className="text-primary"/> REAL CASH BALANCE · KES</div><div className="mt-5 font-mono text-4xl font-semibold">{balance === null ? '—' : balance.toLocaleString('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 2 })}</div><p className="mt-3 text-xs leading-relaxed text-muted-foreground">Your cash wallet is separate from the $100,000 simulated paper-trading balance. Deposits do not execute live market trades.</p>{!signedIn && <p className="mt-4 rounded-lg bg-muted p-3 text-xs text-muted-foreground">Sign in on the chart page to access your personal wallet.</p>}</section>
-        <form onSubmit={deposit} className="space-y-5 rounded-xl border border-border bg-card p-6"><div><h2 className="text-lg font-semibold">Deposit with M-Pesa</h2><p className="mt-1 text-xs text-muted-foreground">KES 100–100,000 · Safaricom STK Push</p></div><label className="block text-xs text-muted-foreground">Amount (KES)<input type="number" min="100" max="100000" step="1" required value={amount} onChange={e=>setAmount(e.target.value)} className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-3 font-mono text-sm text-foreground"/></label><label className="block text-xs text-muted-foreground">M-Pesa phone number<input type="tel" required value={phone} onChange={e=>setPhone(e.target.value)} placeholder="07XXXXXXXX" className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-3 font-mono text-sm text-foreground"/></label><button disabled={busy || Boolean(requestId)} className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">{busy?'Sending STK prompt…':requestId?'Awaiting confirmation…':'Request M-Pesa payment'} <ArrowUpRight size={15} className="ml-1 inline"/></button>{message && <p aria-live="polite" className="rounded-lg bg-muted p-3 text-xs leading-relaxed">{message}</p>}{requestId && <p className="text-xs text-muted-foreground">Waiting for Safaricom confirmation. This page checks status automatically.</p>}</form>
+  return (
+    <PageFrame title="Cash wallet" description="Add money to your KES wallet with an M-Pesa prompt on your phone. It is kept separate from your practice balance." width="max-w-5xl">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <section className="panel self-start" aria-label="Wallet balance">
+          <div className="panel-head"><h2 className="text-base font-semibold">Balance</h2><Wallet size={18} className="text-muted-foreground" /></div>
+          <div className="panel-body">
+            <div className="text-sm text-muted-foreground">Available in KES</div>
+            <div className="num mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">{balance === null ? '—' : balance.toLocaleString('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 2 })}</div>
+            <p className="mt-5 text-sm leading-relaxed text-muted-foreground">Deposits do not place live market trades. Your $100,000 practice balance is tracked separately.</p>
+            {!signedIn && (
+              <div className="mt-6 rounded-xl bg-background p-4 text-sm leading-relaxed text-secondary-foreground">
+                Sign in from the terminal to see your wallet.
+                <Link to="/" className="btn btn-primary btn-sm mt-4 w-full sm:w-auto">Go to terminal</Link>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <form onSubmit={deposit} className="panel" aria-label="Deposit with M-Pesa">
+          <div className="panel-head"><h2 className="text-base font-semibold">Deposit with M-Pesa</h2><span className="text-sm text-muted-foreground">KES 100 to 100,000</span></div>
+          <div className="panel-body space-y-6">
+            <div>
+              <label htmlFor="wallet-amount" className="field-label">Amount (KES)</label>
+              <input id="wallet-amount" className="field num" type="number" min="100" max="100000" step="1" required value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <div className="mt-3 flex flex-wrap gap-2">
+                {['500', '1000', '5000', '10000'].map((preset) => (
+                  <button key={preset} type="button" onClick={() => setAmount(preset)} className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${amount === preset ? 'border-primary/60 bg-accent text-accent-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}>{Number(preset).toLocaleString()}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label htmlFor="wallet-phone" className="field-label">M-Pesa phone number</label>
+              <input id="wallet-phone" className="field num" type="tel" inputMode="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07XXXXXXXX" />
+              <p className="field-hint">You will get a prompt on this phone to enter your M-Pesa PIN.</p>
+            </div>
+            <button disabled={busy || Boolean(requestId)} className="btn btn-primary w-full">
+              {busy ? 'Sending prompt…' : requestId ? 'Waiting for confirmation…' : 'Request M-Pesa prompt'}
+              {!busy && !requestId && <ArrowUpRight size={17} />}
+            </button>
+            {message && <p aria-live="polite" className="rounded-xl bg-background p-4 text-sm leading-relaxed text-secondary-foreground">{message}</p>}
+            {requestId && <p className="text-sm text-muted-foreground">Waiting for Safaricom to confirm. This page checks automatically.</p>}
+          </div>
+        </form>
       </div>
-    </div>
-  </main>
+    </PageFrame>
+  )
 }

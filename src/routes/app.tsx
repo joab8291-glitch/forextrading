@@ -31,7 +31,7 @@ export const Route = createFileRoute('/app')({
 
 function AppLayout() {
   return (
-    <SharedAppLayout appName="App">
+    <SharedAppLayout appName="Northstar FX">
       <Outlet />
     </SharedAppLayout>
   )
