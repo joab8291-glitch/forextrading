@@ -58,5 +58,9 @@
   },
   "resolutions": {
     "lucide-react": "0.577.0"
+  },
+  "allowScripts": {
+    "@tailwindcss/oxide@4.1.13": true,
+    "esbuild@0.27.7": true
   }
 }
