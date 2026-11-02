@@ -17,6 +17,10 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Wallet,
+  X,
+  Mail,
+  LockKeyhole,
+  UserRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { apiRequest, clearToken, getToken, setToken } from '@/lib/api'
@@ -376,16 +380,16 @@ function TradingTerminal() {
 
       {authOpen && (
         <div
-          className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/75 px-4 py-6 backdrop-blur-sm sm:items-center sm:py-8"
+          className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-black/75 px-4 py-5 backdrop-blur-md sm:px-6 sm:py-8"
           role="dialog"
           aria-modal="true"
           aria-labelledby="auth-title"
           onMouseDown={(event) => { if (event.target === event.currentTarget) setAuthOpen(false) }}
         >
-          <section className="my-auto max-h-[calc(100dvh-3rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8">
+          <section className="my-auto max-h-[calc(100dvh-2.5rem)] w-full max-w-[440px] overflow-y-auto rounded-3xl border border-border/80 bg-card p-6 shadow-[0_28px_100px_-24px_rgba(0,0,0,0.85)] sm:max-h-[calc(100dvh-4rem)] sm:p-8">
             <div className="mb-7 flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Northstar FX account</p>
+                <div className="mb-4 flex size-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary"><Activity size={21}/></div>\n                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Northstar FX account</p>
                 <h2 id="auth-title" className="mt-2 text-2xl font-semibold tracking-tight">
                   {authMode === 'register' ? 'Create your account' : 'Welcome back'}
                 </h2>
@@ -393,13 +397,13 @@ function TradingTerminal() {
                   {authMode === 'register' ? 'Create an account to save and manage your practice positions.' : 'Sign in to access your paper-trading account and wallet.'}
                 </p>
               </div>
-              <button type="button" onClick={() => setAuthOpen(false)} aria-label="Close sign-in dialog" className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border text-lg text-muted-foreground transition hover:bg-accent hover:text-foreground">×</button>
+              <button type="button" onClick={() => setAuthOpen(false)} aria-label="Close sign-in dialog" className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border text-muted-foreground transition hover:border-primary/40 hover:bg-accent hover:text-foreground"><X size={17}/></button>
             </div>
             <form onSubmit={submitAuth} className="space-y-5">
               {authMode === 'register' && (
                 <label className="block space-y-2 text-sm font-medium text-foreground">
                   Full name
-                  <input required minLength={2} maxLength={80} autoComplete="name" value={authName} onChange={e => setAuthName(e.target.value)} className="w-full rounded-lg border border-border bg-background px-4 py-3 text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Your full name" />
+                  <input required minLength={2} maxLength={80} autoComplete="name" value={authName} onChange={e => setAuthName(e.target.value)} className="w-full rounded-xl border border-border/90 bg-background/80 px-4 py-3.5 text-base text-foreground outline-none transition duration-200 placeholder:text-muted-foreground/80 hover:border-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/15" placeholder="Your full name" />
                 </label>
               )}
               <label className="block space-y-2 text-sm font-medium text-foreground">
@@ -411,7 +415,7 @@ function TradingTerminal() {
                 <input required type="password" minLength={authMode === 'register' ? 10 : 1} autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="w-full rounded-lg border border-border bg-background px-4 py-3 text-base text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder={authMode === 'register' ? 'At least 10 characters' : 'Enter your password'} />
                 {authMode === 'register' && <span className="block text-xs font-normal leading-relaxed text-muted-foreground">Use at least 10 characters.</span>}
               </label>
-              <button type="submit" disabled={authBusy} className="w-full rounded-lg bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60">
+              <button type="submit" disabled={authBusy} className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/10 transition duration-200 hover:-translate-y-0.5 hover:brightness-105 hover:shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">>
                 {authBusy ? 'Please wait…' : authMode === 'register' ? 'Create account' : 'Sign in'}
               </button>
             </form>
