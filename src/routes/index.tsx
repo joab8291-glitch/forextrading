@@ -27,12 +27,12 @@ import { apiRequest, clearToken, getToken, setToken } from '@/lib/api'
 import type { SimulatedTradesRow } from '@/lib/db-types'
 
 const PAIRS = [
-  { symbol: 'EUR/USD', tvSymbol: 'FX:EURUSD', price: 1.08426, change: 0.18, spread: '0.1', high: '1.08641', low: '1.08182' },
-  { symbol: 'GBP/USD', tvSymbol: 'FX:GBPUSD', price: 1.26784, change: -0.12, spread: '0.2', high: '1.27120', low: '1.26433' },
-  { symbol: 'USD/JPY', tvSymbol: 'FX:USDJPY', price: 149.622, change: 0.31, spread: '0.2', high: '149.881', low: '149.104' },
-  { symbol: 'AUD/USD', tvSymbol: 'FX:AUDUSD', price: 0.65218, change: 0.07, spread: '0.2', high: '0.65401', low: '0.64927' },
-  { symbol: 'USD/CAD', tvSymbol: 'FX:USDCAD', price: 1.36125, change: -0.08, spread: '0.3', high: '1.36402', low: '1.35890' },
-  { symbol: 'USD/CHF', tvSymbol: 'FX:USDCHF', price: 0.90144, change: 0.04, spread: '0.3', high: '0.90311', low: '0.89922' },
+  { symbol: 'EUR/USD', tvSymbol: 'OANDA:EURUSD', price: 1.08426, change: 0.18, spread: '0.1', high: '1.08641', low: '1.08182' },
+  { symbol: 'GBP/USD', tvSymbol: 'OANDA:GBPUSD', price: 1.26784, change: -0.12, spread: '0.2', high: '1.27120', low: '1.26433' },
+  { symbol: 'USD/JPY', tvSymbol: 'OANDA:USDJPY', price: 149.622, change: 0.31, spread: '0.2', high: '149.881', low: '149.104' },
+  { symbol: 'AUD/USD', tvSymbol: 'OANDA:AUDUSD', price: 0.65218, change: 0.07, spread: '0.2', high: '0.65401', low: '0.64927' },
+  { symbol: 'USD/CAD', tvSymbol: 'OANDA:USDCAD', price: 1.36125, change: -0.08, spread: '0.3', high: '1.36402', low: '1.35890' },
+  { symbol: 'USD/CHF', tvSymbol: 'OANDA:USDCHF', price: 0.90144, change: 0.04, spread: '0.3', high: '0.90311', low: '0.89922' },
 ]
 
 const INTERVALS = [
@@ -314,7 +314,7 @@ function TradingTerminal() {
     setMobileNavOpen(false)
   }
 
-  const [rightPanel, setRightPanel] = useState<'watchlist' | 'trade'>('watchlist')
+  const [featuresOpen, setFeaturesOpen] = useState(false)
 
   return (
     <main className="terminal-shell min-h-dvh overflow-hidden text-foreground">
@@ -324,71 +324,51 @@ function TradingTerminal() {
             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Activity size={18}/></div>
             <div className="min-w-0"><div className="font-mono text-[13px] font-bold tracking-[0.14em]">NORTHSTAR <span className="text-primary">FX</span></div><div className="hidden text-[9px] uppercase tracking-[0.16em] text-muted-foreground sm:block">Markets workspace</div></div>
             <div className="ml-3 hidden h-7 w-px bg-border lg:block"/>
-            <nav className="hidden items-center gap-1 text-xs lg:flex">
-              <a href="/" className="rounded-md bg-accent px-3 py-2 font-semibold text-primary">Chart</a>
-              <a href="/trade" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground">Trade</a>
-              <a href="/trades" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground">Positions</a>
-              <a href="/wallet" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground">Wallet</a>
-            </nav>
+            <div className="relative">
+              <button type="button" aria-expanded={featuresOpen} aria-haspopup="menu" onClick={() => setFeaturesOpen(value => !value)} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+                <Menu size={16}/> Features <ChevronDown size={14} className={featuresOpen ? 'rotate-180 transition-transform' : 'transition-transform'}/>
+              </button>
+              {featuresOpen && <><button aria-label="Close features menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setFeaturesOpen(false)}/><div role="menu" className="absolute left-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-2xl border border-border bg-card p-2 shadow-2xl">
+                <div className="px-3 pb-2 pt-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Workspace features</div>
+                <a role="menuitem" href="/" onClick={() => setFeaturesOpen(false)} className="flex items-center gap-3 rounded-xl bg-accent px-3 py-3 text-sm font-semibold text-primary"><BarChart3 size={17}/> Live chart <span className="ml-auto text-[9px]">OPEN</span></a>
+                <a role="menuitem" href="/trade" onClick={() => setFeaturesOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-foreground transition hover:bg-accent"><Activity size={17} className="text-primary"/> Practice trading</a>
+                <a role="menuitem" href="/trades" onClick={() => setFeaturesOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-foreground transition hover:bg-accent"><Wallet size={17} className="text-primary"/> Positions & history</a>
+                <a role="menuitem" href="/wallet" onClick={() => setFeaturesOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-foreground transition hover:bg-accent"><ArrowUpRight size={17} className="text-primary"/> Wallet & deposits</a>
+              </div></>}
+            </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <span className="hidden rounded-md border border-border px-2.5 py-1.5 font-mono text-[10px] text-muted-foreground sm:inline">PAPER · $100,000</span>
             {authLoading ? <div className="h-8 w-20 animate-pulse rounded-md bg-muted"/> : user ? <button onClick={() => void signOut()} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-[11px] hover:bg-accent"><span className="size-1.5 rounded-full bg-primary"/><span className="max-w-28 truncate">{user.email}</span><LogOut size={13}/></button> : <button type="button" onClick={signIn} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-md shadow-primary/20 transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-lg hover:shadow-primary/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 active:translate-y-0"><LogIn size={17} strokeWidth={2.25}/>Sign in</button>}
           </div>
         </div>
-        <div className="flex h-9 items-center gap-5 overflow-x-auto border-t border-border/50 px-3 font-mono text-[10px] sm:px-5">
-          <span className="shrink-0 font-sans text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">Market overview</span>
-          {PAIRS.map(pair => <button key={pair.symbol} onClick={() => setSelectedSymbol(pair.symbol)} className="flex shrink-0 items-center gap-2 hover:text-primary"><span className="text-muted-foreground">{pair.symbol}</span><span>{formatPrice(pair.price,pair.symbol)}</span><span className={pair.change>=0?'text-primary':'text-destructive'}>{pair.change>0?'+':''}{pair.change.toFixed(2)}%</span></button>)}
-        </div>
+
       </header>
 
-      <div className="flex min-h-[calc(100dvh-92px)]">
-        <aside className="hidden w-12 shrink-0 flex-col items-center gap-2 border-r border-border/70 bg-sidebar py-3 md:flex">
-          <RailButton active label="Chart" onClick={() => window.location.assign('/')}><BarChart3 size={18}/></RailButton>
-          <RailButton label="Trade" onClick={() => window.location.assign('/trade')}><Activity size={18}/></RailButton>
-          <RailButton label="Positions" onClick={() => window.location.assign('/trades')}><Wallet size={18}/></RailButton>
-          <RailButton label="Wallet" onClick={() => window.location.assign('/wallet')}><ArrowUpRight size={18}/></RailButton>
-        </aside>
+      <div className="flex min-h-[calc(100dvh-56px)]">
 
-        <div className="grid min-w-0 flex-1 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px]">
+
+        <div className="grid min-w-0 flex-1 grid-cols-1">
           <section className="min-w-0">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-3 py-3 sm:px-5">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-mono text-[10px] font-bold text-primary">{selected.symbol.slice(0,3)}</div>
                 <div className="min-w-0"><div className="flex items-center gap-2"><h1 className="font-mono text-base font-bold">{selected.symbol}</h1><span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] text-primary">FOREX</span></div><div className="text-[10px] text-muted-foreground">Spot market · indicative quote</div></div>
-                <div className="ml-2 hidden sm:block"><div className="font-mono text-lg font-semibold">{formatPrice(selected.price,selected.symbol)}</div><div className={`font-mono text-[10px] ${selected.change>=0?'text-primary':'text-destructive'}`}>{selected.change>=0?'+':''}{selected.change.toFixed(2)}% today</div></div>
+                <div className="ml-2 hidden sm:block"><div className="text-xs font-semibold text-primary">OANDA market feed</div><div className="text-[10px] text-muted-foreground">Live chart · TradingView</div></div>
               </div>
-              <div className="flex items-center gap-1 rounded-lg bg-card p-1" aria-label="Chart timeframe">{INTERVALS.map(item=><button key={item.value} onClick={()=>setInterval(item.value)} className={`rounded-md px-2.5 py-1.5 font-mono text-[10px] ${interval===item.value?'bg-accent text-primary':'text-muted-foreground hover:text-foreground'}`}>{item.label}</button>)}</div>
-              <div className="hidden items-center gap-3 text-[10px] text-muted-foreground sm:flex"><span>High <b className="font-mono text-foreground">{selected.high}</b></span><span>Low <b className="font-mono text-foreground">{selected.low}</b></span></div>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="sr-only" htmlFor="chart-pair">Market pair</label>
+                <select id="chart-pair" value={selectedSymbol} onChange={event => setSelectedSymbol(event.target.value)} className="rounded-lg border border-border bg-card px-3 py-2 font-mono text-[11px] text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">{PAIRS.map(pair=><option key={pair.symbol} value={pair.symbol}>{pair.symbol}</option>)}</select>
+                <div className="flex items-center gap-1 rounded-lg bg-card p-1" aria-label="Chart timeframe">{INTERVALS.map(item=><button key={item.value} onClick={()=>setInterval(item.value)} className={`rounded-md px-2.5 py-1.5 font-mono text-[10px] ${interval===item.value?'bg-accent text-primary':'text-muted-foreground hover:text-foreground'}`}>{item.label}</button>)}</div>
+              </div>
             </div>
-            <div className="chart-grid h-[calc(100dvh-188px)] min-h-[480px] bg-background xl:h-[calc(100dvh-188px)]">
+            <div className="chart-grid h-[calc(100dvh-125px)] min-h-[420px] bg-background xl:h-[calc(100dvh-125px)]">
               <iframe key={chartUrl} title={`TradingView chart for ${selected.symbol}`} src={chartUrl} className="h-full w-full border-0" loading="eager" allow="clipboard-write"/>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 px-4 py-2 text-[9px] text-muted-foreground"><span className="flex items-center gap-1.5"><ShieldCheck size={12} className="text-primary"/>Chart powered by TradingView</span><span>Practice environment · Quotes shown in the trade ticket are indicative samples</span></div>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 px-4 py-2 text-[9px] text-muted-foreground"><span className="flex items-center gap-1.5"><ShieldCheck size={12} className="text-primary"/>Live chart powered by TradingView · OANDA</span><span>Practice environment · Quotes shown in the trade ticket are indicative samples</span></div>
           </section>
 
-          <aside className="flex min-w-0 flex-col border-t border-border/70 bg-card xl:border-l xl:border-t-0">
-            <div className="flex h-12 shrink-0 items-center border-b border-border/70 px-2">
-              <button onClick={()=>setRightPanel('watchlist')} className={`flex-1 rounded-md px-3 py-2 text-[11px] font-semibold ${rightPanel==='watchlist'?'bg-accent text-primary':'text-muted-foreground hover:text-foreground'}`}>Watchlist</button>
-              <button onClick={()=>setRightPanel('trade')} className={`flex-1 rounded-md px-3 py-2 text-[11px] font-semibold ${rightPanel==='trade'?'bg-accent text-primary':'text-muted-foreground hover:text-foreground'}`}>Trade ticket</button>
-            </div>
-            {rightPanel==='watchlist' ? <div className="min-h-0 flex-1 overflow-y-auto">
-              <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 border-b border-border/60 px-3 py-2 text-[9px] uppercase tracking-wider text-muted-foreground"><span>Symbol</span><span>Last</span><span>Change</span></div>
-              {PAIRS.map(pair=><button key={pair.symbol} onClick={()=>setSelectedSymbol(pair.symbol)} className={`grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 border-b border-border/50 px-3 py-3 text-left transition hover:bg-accent/50 ${selected.symbol===pair.symbol?'bg-primary/[0.07]':''}`}><span className="min-w-0"><span className="block font-mono text-[11px] font-semibold">{pair.symbol}</span><span className="block text-[9px] text-muted-foreground">Forex</span></span><span className="font-mono text-[10px]">{formatPrice(pair.price,pair.symbol)}</span><span className={`text-right font-mono text-[10px] ${pair.change>=0?'text-primary':'text-destructive'}`}>{pair.change>0?'+':''}{pair.change.toFixed(2)}%</span></button>)}
-              <div className="p-3"><a href="/trade" className="block rounded-lg border border-border px-3 py-2.5 text-center text-[10px] font-semibold hover:bg-accent">Open practice trading <ArrowUpRight size={13} className="ml-1 inline"/></a></div>
-              <div className="mx-3 rounded-lg bg-background p-3 text-[9px] leading-relaxed text-muted-foreground">Market quotes in this watchlist are sample display values and may differ from the embedded TradingView chart.</div>
-            </div> : <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              <div className="mb-4"><p className="text-[9px] font-semibold uppercase tracking-widest text-primary">Paper trading</p><h2 className="mt-1 text-base font-semibold">Practice order</h2><p className="mt-1 text-[10px] text-muted-foreground">No real orders or broker execution.</p></div>
-              <div className="mb-3 flex rounded-lg bg-background p-1"><button type="button" onClick={()=>setSide('buy')} className={`flex-1 rounded-md py-2 text-[10px] font-semibold ${side==='buy'?'bg-primary text-primary-foreground':'text-muted-foreground'}`}>Buy / Long</button><button type="button" onClick={()=>setSide('sell')} className={`flex-1 rounded-md py-2 text-[10px] font-semibold ${side==='sell'?'bg-destructive/15 text-destructive':'text-muted-foreground'}`}>Sell / Short</button></div>
-              <form onSubmit={placePaperTrade} className="space-y-4">
-                <label className="block text-[10px] text-muted-foreground">Market pair<select value={selectedSymbol} onChange={e=>setSelectedSymbol(e.target.value)} className="mt-2 w-full rounded-xl border border-border bg-background px-3 py-3 font-mono text-sm text-foreground transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15">{PAIRS.map(pair=><option key={pair.symbol} value={pair.symbol}>{pair.symbol}</option>)}</select></label>
-                <label className="block text-[10px] text-muted-foreground">Position size · units<input type="number" min="1000" max="1000000" step="1000" value={units} onChange={e=>setUnits(e.target.value)} className="mt-2 w-full rounded-xl border border-border bg-background px-3 py-3 font-mono text-sm text-foreground transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"/></label>
-                <div className="grid grid-cols-2 gap-2"><label className="text-[10px] text-muted-foreground">Stop loss<input type="number" step="any" value={stopLoss} onChange={e=>setStopLoss(e.target.value)} placeholder="Optional" className="mt-2 w-full min-w-0 rounded-xl border border-border bg-background px-3 py-3 font-mono text-xs text-foreground transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"/></label><label className="text-[10px] text-muted-foreground">Take profit<input type="number" step="any" value={takeProfit} onChange={e=>setTakeProfit(e.target.value)} placeholder="Optional" className="mt-1 w-full min-w-0 rounded-md border border-border bg-background px-2 py-2 font-mono text-[10px] text-foreground"/></label></div>
-                <div className="rounded-md border border-border bg-background p-2.5"><div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Indicative entry</span><b className="font-mono">{formatPrice(selected.price,selected.symbol)}</b></div><div className="mt-1 flex justify-between text-[10px]"><span className="text-muted-foreground">Order type</span><span>Market · simulated</span></div></div>
-                <button type="submit" disabled={savingTrade} className={`w-full rounded-md py-3 text-[11px] font-bold disabled:opacity-50 ${side==='buy'?'bg-primary text-primary-foreground':'bg-destructive text-destructive-foreground'}`}>{savingTrade?'Saving…':user?`${side==='buy'?'Buy':'Sell'} ${selected.symbol}`:'Sign in to practise'}</button>
-              </form>
-            </div>}
-          </aside>
+
         </div>
       </div>
 
