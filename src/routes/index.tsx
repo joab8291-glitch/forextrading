@@ -351,8 +351,8 @@ function TradingTerminal() {
 
           {mobileNavOpen && <div className="fixed inset-x-0 top-[108px] z-40 border-b border-border bg-card p-3 shadow-lg lg:hidden"><div className="grid grid-cols-3 gap-2"><MobileNavButton onClick={() => goTo('market')}>Markets</MobileNavButton><MobileNavButton onClick={() => goTo('watchlist')}>Watchlist</MobileNavButton><MobileNavButton onClick={() => goTo('positions')}>Positions</MobileNavButton></div></div>}
 
-          <div className="mx-auto max-w-[1600px] px-4 py-5 sm:px-6 sm:py-7 xl:px-8">
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-4" id="market">
+          <div className="mx-auto w-full max-w-[1480px] px-4 py-6 sm:px-6 sm:py-8 2xl:px-8">
+            <div className="mb-7 flex flex-wrap items-end justify-between gap-5 scroll-mt-32" id="market">
               <div>
                 <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary"><span className="size-1.5 rounded-full bg-primary" /> Demo environment</div>
                 <h1 className="text-2xl font-semibold tracking-tight sm:text-[30px]">Forex markets</h1>
@@ -364,15 +364,15 @@ function TradingTerminal() {
               </div>
             </div>
 
-            <section className="mb-5 grid gap-4 rounded-2xl border border-border/80 bg-card p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)] sm:p-5">
+            <section aria-label="Cash wallet and deposits" className="mb-7 grid min-w-0 gap-5 rounded-2xl border border-border/80 bg-card p-5 shadow-sm lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-7 lg:p-6">
               <div className="flex flex-col justify-center">
                 <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary"><Wallet size={14} /> Real cash wallet · KES</div>
-                <div className="mt-2 font-mono text-3xl font-semibold tracking-tight">{walletBalance === null ? '—' : `KES ${walletBalance.toLocaleString('en-KE')}`}</div>
+                <div className="mt-3 font-mono text-3xl font-semibold tracking-tight sm:text-4xl">{walletBalance === null ? '—' : `KES ${walletBalance.toLocaleString('en-KE')}`}</div>
                 <p className="mt-1.5 max-w-md text-xs leading-relaxed text-muted-foreground">Deposits are recorded separately from practice capital. Your $100,000 paper balance and simulated trades are not real-money trading.</p>
                 {depositMessage && <p aria-live="polite" className="mt-3 rounded-lg bg-primary/5 px-3 py-2 text-xs text-foreground">{depositMessage}</p>}
                 {depositRequestId && <p className="mt-2 text-[10px] text-muted-foreground">Waiting for M-Pesa confirmation… This panel checks payment status automatically.</p>}
               </div>
-              <form onSubmit={startDeposit} className="grid content-center gap-3 rounded-xl border border-border/70 bg-background/65 p-3.5 sm:p-4">
+              <form onSubmit={startDeposit} className="grid min-w-0 content-center gap-4 rounded-xl border border-border/70 bg-background/65 p-4 sm:p-5">
                 <div><h2 className="text-sm font-semibold">Deposit with M-Pesa</h2><p className="mt-0.5 text-[11px] text-muted-foreground">KES 100–100,000 · Safaricom STK Push</p></div>
                 <div className="grid grid-cols-2 gap-2.5">
                   <label className="text-[10px] font-medium text-muted-foreground">Amount (KES)
@@ -388,14 +388,14 @@ function TradingTerminal() {
               </form>
             </section>
 
-            <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <section aria-label="Account summary" className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:gap-4">
               <Metric label="Market" value="Forex" sub="Global currency pairs" icon={<Activity size={15} />} />
               <Metric label="Practice capital" value="$100,000" sub="Virtual · no cash value" icon={<Wallet size={15} />} />
               <Metric label="Open positions" value={user ? String(openTrades.length).padStart(2, '0') : '—'} sub={user ? 'Your paper trades' : 'Sign in to save trades'} icon={<BarChart3 size={15} />} />
               <Metric label="Session" value="24 / 5" sub="Market hours vary by venue" icon={<Clock3 size={15} />} />
-            </div>
+            </section>
 
-            <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_332px]">
+            <section aria-label="Market workspace" className="mb-8">\n              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">\n                <div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Market workspace</p><h2 className="mt-1 text-lg font-semibold tracking-tight">Chart &amp; order entry</h2></div>\n                <p className="text-[11px] text-muted-foreground">Review the market, then practise with a simulated order.</p>\n              </div>\n              <div className="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:gap-6">
               <section className="min-w-0 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-md">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-4 sm:px-5">
                   <div className="flex items-center gap-3">
@@ -412,13 +412,13 @@ function TradingTerminal() {
                   <div className="flex items-center gap-1 rounded-lg bg-background/75 p-1" aria-label="Chart timeframe">{INTERVALS.map((item) => <button key={item.value} onClick={() => setInterval(item.value)} className={`rounded-md px-2.5 py-1.5 font-mono text-[10px] transition ${interval === item.value ? 'bg-accent text-primary' : 'text-muted-foreground hover:text-foreground'}`}>{item.label}</button>)}</div>
                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground"><span>High <b className="ml-1 font-mono font-medium text-foreground">{selected.high}</b></span><span className="text-border">/</span><span>Low <b className="ml-1 font-mono font-medium text-foreground">{selected.low}</b></span><button aria-label="Chart options" className="ml-1 rounded-md p-1.5 hover:bg-accent" onClick={() => toast('Chart controls are provided by TradingView.')}><SlidersHorizontal size={14} /></button></div>
                 </div>
-                <div className="chart-grid relative h-[350px] bg-background sm:h-[430px] xl:h-[480px]">
+                <div className="chart-grid relative h-[360px] bg-background sm:h-[460px] 2xl:h-[520px]">
                   <iframe key={chartUrl} title={`TradingView chart for ${selected.symbol}`} src={chartUrl} className="relative z-10 h-full w-full border-0" loading="lazy" allow="clipboard-write" />
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-4 py-2.5 text-[10px] text-muted-foreground sm:px-5"><span className="flex items-center gap-1.5"><ShieldCheck size={13} className="text-primary" /> Chart hosted by TradingView</span><span>Quotes in the ticket are sample-only and may differ from chart data.</span></div>
               </section>
 
-              <section className="rounded-2xl border border-border/80 bg-card p-4 shadow-md sm:p-5">
+              <section className="min-w-0 rounded-2xl border border-border/80 bg-card p-5 shadow-md sm:p-6 xl:sticky xl:top-32">
                 <div className="mb-5 flex items-start justify-between"><div><div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Practice order</div><h2 className="mt-1 text-lg font-semibold">Trade ticket</h2></div><button onClick={() => toast('Orders are simulated. No broker is connected.')} aria-label="Order information" className="rounded-md p-1.5 text-muted-foreground hover:bg-accent"><CircleHelp size={16} /></button></div>
                 <div className="mb-4 flex rounded-xl bg-background p-1">
                   <button type="button" onClick={() => setSide('buy')} className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold transition ${side === 'buy' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}><ArrowUpRight size={15} /> Buy / Long</button>
@@ -433,9 +433,10 @@ function TradingTerminal() {
                 </form>
                 <div className="mt-4 flex gap-2 rounded-lg bg-primary/5 p-3 text-[10px] leading-relaxed text-muted-foreground"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-primary" /><p>This creates a saved paper position only. No real order, deposit, withdrawal, or cash balance is connected.</p></div>
               </section>
-            </div>
+              </div>
+            </section>
 
-            <section id="watchlist" className="mt-5 grid scroll-mt-32 gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+            <section id="watchlist" className="grid scroll-mt-32 gap-5 xl:grid-cols-2 2xl:gap-6">
               <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
                 <div className="flex items-center justify-between border-b border-border/70 px-4 py-4 sm:px-5"><div><h2 className="text-sm font-semibold">Watchlist</h2><p className="mt-0.5 text-[11px] text-muted-foreground">Major pairs · indicative sample quotes</p></div><button aria-label="Watchlist settings" onClick={() => toast('Showing the default major-pairs watchlist.')} className="rounded-lg p-2 text-muted-foreground hover:bg-accent"><SlidersHorizontal size={15} /></button></div>
                 <div className="divide-y divide-border/60">{PAIRS.map((pair) => <button key={pair.symbol} onClick={() => { setSelectedSymbol(pair.symbol); goTo('market') }} className={`grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-4 px-4 py-3 text-left transition hover:bg-accent/45 sm:grid-cols-[minmax(0,1fr)_100px_90px_70px] sm:px-5 ${selected.symbol === pair.symbol ? 'bg-primary/[0.035]' : ''}`}><span className="flex min-w-0 items-center gap-3"><span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-background font-mono text-[9px] font-semibold text-muted-foreground">{pair.symbol.slice(0, 3)}</span><span className="min-w-0"><span className="block truncate font-mono text-xs font-semibold">{pair.symbol}</span><span className="block text-[10px] text-muted-foreground">Spot FX</span></span></span><span className="text-right font-mono text-xs">{formatPrice(pair.price, pair.symbol)}</span><span className={`text-right font-mono text-[11px] ${pair.change >= 0 ? 'text-primary' : 'text-destructive'}`}>{pair.change > 0 ? '+' : ''}{pair.change.toFixed(2)}%</span><span className="hidden justify-end sm:flex">{pair.change >= 0 ? <ArrowUpRight size={15} className="text-primary" /> : <ArrowDownRight size={15} className="text-destructive" />}</span></button>)}</div>
@@ -448,7 +449,7 @@ function TradingTerminal() {
               </div>
             </section>
 
-            <footer className="mt-6 flex flex-col gap-2 border-t border-border/60 py-4 text-[10px] leading-relaxed text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><p>Northstar FX is a paper-trading interface for practice and education. It is not a brokerage or investment service.</p><span className="flex items-center gap-1.5"><ShieldCheck size={12} className="text-primary" /> No real funds or orders are handled</span></footer>
+            <footer className="mt-8 flex flex-col gap-3 border-t border-border/60 py-6 text-[11px] leading-relaxed text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><p>Northstar FX is a paper-trading interface for practice and education. It is not a brokerage or investment service.</p><span className="flex items-center gap-1.5"><ShieldCheck size={12} className="text-primary" /> No real funds or orders are handled</span></footer>
           </div>
         </div>
       </div>
