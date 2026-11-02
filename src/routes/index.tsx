@@ -375,13 +375,13 @@ function TradingTerminal() {
 
       {authOpen && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto overscroll-contain bg-black/80 px-3 py-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:items-center sm:px-6 sm:py-8"
+          className="fixed inset-0 z-[2147483647] flex h-[100dvh] min-h-[100svh] w-screen items-start justify-center overflow-x-hidden overflow-y-auto overscroll-y-contain bg-black/90 px-3 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md touch-pan-y sm:items-center sm:px-6 sm:py-8"
           role="dialog"
           aria-modal="true"
           aria-labelledby="auth-title"
           onMouseDown={(event) => { if (event.target === event.currentTarget) setAuthOpen(false) }}
         >
-          <section className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-[440px] shrink-0 overflow-y-auto overscroll-contain rounded-3xl border border-border/80 bg-card p-5 shadow-[0_28px_100px_-24px_rgba(0,0,0,0.85)] sm:max-h-[calc(100dvh-4rem)] sm:p-8">
+          <section className="my-3 max-h-[calc(100dvh-1.5rem)] w-full max-w-[440px] shrink-0 overflow-x-hidden overflow-y-auto overscroll-y-contain rounded-3xl border border-border/80 bg-card p-5 shadow-[0_28px_100px_-24px_rgba(0,0,0,0.95)] sm:my-auto sm:max-h-[calc(100dvh-4rem)] sm:p-8">
             <div className="mb-7 flex items-start justify-between gap-4">
               <div>
                 <div className="mb-4 flex size-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary"><Activity size={21}/></div>
