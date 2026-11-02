@@ -296,188 +296,88 @@ function TradingTerminal() {
     setMobileNavOpen(false)
   }
 
+  const [rightPanel, setRightPanel] = useState<'watchlist' | 'trade'>('watchlist')
+
   return (
-    <main className="terminal-shell min-h-dvh text-foreground">
-      <div className="flex min-h-dvh">
-        <aside className="hidden w-[72px] shrink-0 flex-col items-center border-r border-border/70 bg-sidebar py-5 lg:flex">
-          <button aria-label="Northstar home" onClick={() => goTo('market')} className="mb-9 flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md transition hover:scale-105 active:scale-95">
-            <Activity size={20} strokeWidth={2.5} />
-          </button>
-          <nav aria-label="Main navigation" className="flex flex-1 flex-col items-center gap-3">
-            <RailButton active label="Markets" onClick={() => goTo('market')}><BarChart3 size={19} /></RailButton>
-            <RailButton label="Watchlist" onClick={() => goTo('watchlist')}><SlidersHorizontal size={19} /></RailButton>
-            <RailButton label="Positions" onClick={() => goTo('positions')}><Wallet size={19} /></RailButton>
-          </nav>
-          <RailButton label="Help" onClick={() => toast('This is a paper-trading demo; no real orders or funds are handled.')}><CircleHelp size={19} /></RailButton>
+    <main className="terminal-shell min-h-dvh overflow-hidden text-foreground">
+      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur-xl">
+        <div className="flex h-14 items-center justify-between gap-3 px-3 sm:px-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Activity size={18}/></div>
+            <div className="min-w-0"><div className="font-mono text-[13px] font-bold tracking-[0.14em]">NORTHSTAR <span className="text-primary">FX</span></div><div className="hidden text-[9px] uppercase tracking-[0.16em] text-muted-foreground sm:block">Markets workspace</div></div>
+            <div className="ml-3 hidden h-7 w-px bg-border lg:block"/>
+            <nav className="hidden items-center gap-1 text-xs lg:flex">
+              <a href="/" className="rounded-md bg-accent px-3 py-2 font-semibold text-primary">Chart</a>
+              <a href="/trade" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground">Trade</a>
+              <a href="/trades" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground">Positions</a>
+              <a href="/wallet" className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground">Wallet</a>
+            </nav>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="hidden rounded-md border border-border px-2.5 py-1.5 font-mono text-[10px] text-muted-foreground sm:inline">PAPER · $100,000</span>
+            {authLoading ? <div className="h-8 w-20 animate-pulse rounded-md bg-muted"/> : user ? <button onClick={() => void signOut()} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-[11px] hover:bg-accent"><span className="size-1.5 rounded-full bg-primary"/><span className="max-w-28 truncate">{user.email}</span><LogOut size={13}/></button> : <button onClick={signIn} className="rounded-md bg-primary px-3 py-2 text-[11px] font-bold text-primary-foreground"><LogIn size={13} className="mr-1 inline"/>Sign in</button>}
+          </div>
+        </div>
+        <div className="flex h-9 items-center gap-5 overflow-x-auto border-t border-border/50 px-3 font-mono text-[10px] sm:px-5">
+          <span className="shrink-0 font-sans text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">Market overview</span>
+          {PAIRS.map(pair => <button key={pair.symbol} onClick={() => setSelectedSymbol(pair.symbol)} className="flex shrink-0 items-center gap-2 hover:text-primary"><span className="text-muted-foreground">{pair.symbol}</span><span>{formatPrice(pair.price,pair.symbol)}</span><span className={pair.change>=0?'text-primary':'text-destructive'}>{pair.change>0?'+':''}{pair.change.toFixed(2)}%</span></button>)}
+        </div>
+      </header>
+
+      <div className="flex min-h-[calc(100dvh-92px)]">
+        <aside className="hidden w-12 shrink-0 flex-col items-center gap-2 border-r border-border/70 bg-sidebar py-3 md:flex">
+          <RailButton active label="Chart" onClick={() => window.location.assign('/')}><BarChart3 size={18}/></RailButton>
+          <RailButton label="Trade" onClick={() => window.location.assign('/trade')}><Activity size={18}/></RailButton>
+          <RailButton label="Positions" onClick={() => window.location.assign('/trades')}><Wallet size={18}/></RailButton>
+          <RailButton label="Wallet" onClick={() => window.location.assign('/wallet')}><ArrowUpRight size={18}/></RailButton>
         </aside>
 
-        <div className="min-w-0 flex-1">
-          <header className="sticky top-0 z-30 border-b border-border/70 bg-background/95 backdrop-blur-xl">
-            <div className="flex h-[68px] items-center justify-between gap-4 px-4 sm:px-6 xl:px-8">
-              <div className="flex items-center gap-3">
-                <button className="rounded-lg p-2 text-muted-foreground hover:bg-accent lg:hidden" aria-label="Open navigation" onClick={() => setMobileNavOpen((open) => !open)}>
-                  <Menu size={20} />
-                </button>
-                <div className="flex items-center gap-3">
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-primary/12 text-primary lg:hidden"><Activity size={18} /></div>
-                  <div>
-                    <div className="font-mono text-[13px] font-semibold tracking-[0.16em] text-foreground">NORTHSTAR <span className="text-primary">FX</span></div>
-                    <div className="hidden text-[10px] uppercase tracking-[0.17em] text-muted-foreground sm:block">Market terminal</div>
-                  </div>
-                </div>
-                <div className="ml-5 hidden h-8 w-px bg-border md:block" />
-                <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex"><span className="size-1.5 rounded-full bg-primary" /> TradingView charts</div>
+        <div className="grid min-w-0 flex-1 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_330px]">
+          <section className="min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-3 py-3 sm:px-5">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-mono text-[10px] font-bold text-primary">{selected.symbol.slice(0,3)}</div>
+                <div className="min-w-0"><div className="flex items-center gap-2"><h1 className="font-mono text-base font-bold">{selected.symbol}</h1><span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] text-primary">FOREX</span></div><div className="text-[10px] text-muted-foreground">Spot market · indicative quote</div></div>
+                <div className="ml-2 hidden sm:block"><div className="font-mono text-lg font-semibold">{formatPrice(selected.price,selected.symbol)}</div><div className={`font-mono text-[10px] ${selected.change>=0?'text-primary':'text-destructive'}`}>{selected.change>=0?'+':''}{selected.change.toFixed(2)}% today</div></div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <button onClick={() => goTo('watchlist')} className="hidden items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs text-muted-foreground transition hover:text-foreground xl:flex"><Search size={14} /><span>Browse pairs</span></button>
-                <button aria-label="Notifications" onClick={() => toast('You are all caught up.')} className="hidden rounded-lg border border-border bg-card p-2.5 text-muted-foreground transition hover:text-foreground sm:block"><Bell size={16} /></button>
-                {authLoading ? (
-                  <div className="h-9 w-24 animate-pulse rounded-lg bg-muted" />
-                ) : user ? (
-                  <button onClick={() => void signOut()} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition hover:bg-accent">
-                    <span className="flex size-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">{(user.email?.[0] ?? 'T').toUpperCase()}</span>
-                    <span className="hidden max-w-28 truncate sm:block">{user.email ?? 'Trader account'}</span><LogOut size={14} className="text-muted-foreground" />
-                  </button>
-                ) : (
-                  <button onClick={signIn} className="flex items-center gap-2 rounded-lg bg-primary px-3.5 py-2.5 text-xs font-bold text-primary-foreground transition hover:brightness-105 active:scale-[0.98]"><LogIn size={15} /> Sign in</button>
-                )}
-              </div>
+              <div className="flex items-center gap-1 rounded-lg bg-card p-1" aria-label="Chart timeframe">{INTERVALS.map(item=><button key={item.value} onClick={()=>setInterval(item.value)} className={`rounded-md px-2.5 py-1.5 font-mono text-[10px] ${interval===item.value?'bg-accent text-primary':'text-muted-foreground hover:text-foreground'}`}>{item.label}</button>)}</div>
+              <div className="hidden items-center gap-3 text-[10px] text-muted-foreground sm:flex"><span>High <b className="font-mono text-foreground">{selected.high}</b></span><span>Low <b className="font-mono text-foreground">{selected.low}</b></span></div>
             </div>
-            <div className="flex h-10 items-center gap-6 overflow-x-auto border-t border-border/50 px-4 font-mono text-[11px] sm:px-6 xl:px-8">
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">FX overview</span>
-              {PAIRS.slice(0, 4).map((pair) => <button key={pair.symbol} onClick={() => setSelectedSymbol(pair.symbol)} className="flex shrink-0 items-center gap-2 transition hover:text-primary"><span className="text-muted-foreground">{pair.symbol}</span><span className="text-foreground">{formatPrice(pair.price, pair.symbol)}</span><span className={pair.change >= 0 ? 'text-primary' : 'text-destructive'}>{pair.change > 0 ? '+' : ''}{pair.change.toFixed(2)}%</span></button>)}
+            <div className="chart-grid h-[calc(100dvh-188px)] min-h-[480px] bg-background xl:h-[calc(100dvh-188px)]">
+              <iframe key={chartUrl} title={`TradingView chart for ${selected.symbol}`} src={chartUrl} className="h-full w-full border-0" loading="eager" allow="clipboard-write"/>
             </div>
-          </header>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 px-4 py-2 text-[9px] text-muted-foreground"><span className="flex items-center gap-1.5"><ShieldCheck size={12} className="text-primary"/>Chart powered by TradingView</span><span>Practice environment · Quotes shown in the trade ticket are indicative samples</span></div>
+          </section>
 
-          {mobileNavOpen && <div className="fixed inset-x-0 top-[108px] z-40 border-b border-border bg-card p-3 shadow-lg lg:hidden"><div className="grid grid-cols-3 gap-2"><MobileNavButton onClick={() => goTo('market')}>Markets</MobileNavButton><MobileNavButton onClick={() => goTo('watchlist')}>Watchlist</MobileNavButton><MobileNavButton onClick={() => goTo('positions')}>Positions</MobileNavButton></div></div>}
-
-          <div className="mx-auto w-full max-w-[1480px] px-4 py-6 sm:px-6 sm:py-8 2xl:px-8">
-            <div className="mb-7 flex flex-wrap items-end justify-between gap-5 scroll-mt-32" id="market">
-              <div>
-                <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary"><span className="size-1.5 rounded-full bg-primary" /> Demo environment</div>
-                <h1 className="text-2xl font-semibold tracking-tight sm:text-[30px]">Forex markets</h1>
-                <p className="mt-1.5 text-sm text-muted-foreground">A clean space to explore the market and practise your setups.</p>
-              </div>
-              <div className="flex items-center gap-2 rounded-xl border border-border/80 bg-card px-3.5 py-2.5 shadow-sm">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Wallet size={16} /></div>
-                <div><div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Virtual buying power</div><div className="font-mono text-sm font-semibold text-foreground">$100,000.00 <span className="text-[10px] font-normal text-muted-foreground">PAPER</span></div></div>
-              </div>
+          <aside className="flex min-w-0 flex-col border-t border-border/70 bg-card xl:border-l xl:border-t-0">
+            <div className="flex h-12 shrink-0 items-center border-b border-border/70 px-2">
+              <button onClick={()=>setRightPanel('watchlist')} className={`flex-1 rounded-md px-3 py-2 text-[11px] font-semibold ${rightPanel==='watchlist'?'bg-accent text-primary':'text-muted-foreground hover:text-foreground'}`}>Watchlist</button>
+              <button onClick={()=>setRightPanel('trade')} className={`flex-1 rounded-md px-3 py-2 text-[11px] font-semibold ${rightPanel==='trade'?'bg-accent text-primary':'text-muted-foreground hover:text-foreground'}`}>Trade ticket</button>
             </div>
-
-            <section aria-label="Cash wallet and deposits" className="mb-7 grid min-w-0 gap-5 rounded-2xl border border-border/80 bg-card p-5 shadow-sm lg:grid-cols-[minmax(0,1.05fr)_minmax(360px,0.95fr)] lg:gap-7 lg:p-6">
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary"><Wallet size={14} /> Real cash wallet · KES</div>
-                <div className="mt-3 font-mono text-3xl font-semibold tracking-tight sm:text-4xl">{walletBalance === null ? '—' : `KES ${walletBalance.toLocaleString('en-KE')}`}</div>
-                <p className="mt-1.5 max-w-md text-xs leading-relaxed text-muted-foreground">Deposits are recorded separately from practice capital. Your $100,000 paper balance and simulated trades are not real-money trading.</p>
-                {depositMessage && <p aria-live="polite" className="mt-3 rounded-lg bg-primary/5 px-3 py-2 text-xs text-foreground">{depositMessage}</p>}
-                {depositRequestId && <p className="mt-2 text-[10px] text-muted-foreground">Waiting for M-Pesa confirmation… This panel checks payment status automatically.</p>}
-              </div>
-              <form onSubmit={startDeposit} className="grid min-w-0 content-center gap-4 rounded-xl border border-border/70 bg-background/65 p-4 sm:p-5">
-                <div><h2 className="text-sm font-semibold">Deposit with M-Pesa</h2><p className="mt-0.5 text-[11px] text-muted-foreground">KES 100–100,000 · Safaricom STK Push</p></div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <label className="text-[10px] font-medium text-muted-foreground">Amount (KES)
-                    <input type="number" min="100" max="100000" step="1" required value={depositAmount} onChange={(event) => setDepositAmount(event.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-card px-3 py-2.5 font-mono text-sm text-foreground outline-none focus:border-primary/70" />
-                  </label>
-                  <label className="text-[10px] font-medium text-muted-foreground">M-Pesa number
-                    <input type="tel" required value={depositPhone} onChange={(event) => setDepositPhone(event.target.value)} placeholder="07XXXXXXXX" className="mt-1.5 w-full rounded-lg border border-border bg-card px-3 py-2.5 font-mono text-sm text-foreground outline-none focus:border-primary/70" />
-                  </label>
-                </div>
-                <button type="submit" disabled={depositBusy || Boolean(depositRequestId) || !mpesaApiBase} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-xs font-bold text-primary-foreground transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50">{depositBusy ? 'Sending STK prompt…' : depositRequestId ? 'Awaiting M-Pesa confirmation…' : user ? 'Deposit via M-Pesa' : 'Sign in to deposit'}<ArrowUpRight size={15} /></button>
-                {!mpesaApiBase && <p className="text-[10px] text-destructive">M-Pesa payment service is not configured.</p>}
-                {!user && <p className="text-[10px] text-muted-foreground">Sign in to deposit into your own wallet.</p>}
+            {rightPanel==='watchlist' ? <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 border-b border-border/60 px-3 py-2 text-[9px] uppercase tracking-wider text-muted-foreground"><span>Symbol</span><span>Last</span><span>Change</span></div>
+              {PAIRS.map(pair=><button key={pair.symbol} onClick={()=>setSelectedSymbol(pair.symbol)} className={`grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 border-b border-border/50 px-3 py-3 text-left transition hover:bg-accent/50 ${selected.symbol===pair.symbol?'bg-primary/[0.07]':''}`}><span className="min-w-0"><span className="block font-mono text-[11px] font-semibold">{pair.symbol}</span><span className="block text-[9px] text-muted-foreground">Forex</span></span><span className="font-mono text-[10px]">{formatPrice(pair.price,pair.symbol)}</span><span className={`text-right font-mono text-[10px] ${pair.change>=0?'text-primary':'text-destructive'}`}>{pair.change>0?'+':''}{pair.change.toFixed(2)}%</span></button>)}
+              <div className="p-3"><a href="/trade" className="block rounded-lg border border-border px-3 py-2.5 text-center text-[10px] font-semibold hover:bg-accent">Open practice trading <ArrowUpRight size={13} className="ml-1 inline"/></a></div>
+              <div className="mx-3 rounded-lg bg-background p-3 text-[9px] leading-relaxed text-muted-foreground">Market quotes in this watchlist are sample display values and may differ from the embedded TradingView chart.</div>
+            </div> : <div className="min-h-0 flex-1 overflow-y-auto p-4">
+              <div className="mb-4"><p className="text-[9px] font-semibold uppercase tracking-widest text-primary">Paper trading</p><h2 className="mt-1 text-base font-semibold">Practice order</h2><p className="mt-1 text-[10px] text-muted-foreground">No real orders or broker execution.</p></div>
+              <div className="mb-3 flex rounded-lg bg-background p-1"><button type="button" onClick={()=>setSide('buy')} className={`flex-1 rounded-md py-2 text-[10px] font-semibold ${side==='buy'?'bg-primary text-primary-foreground':'text-muted-foreground'}`}>Buy / Long</button><button type="button" onClick={()=>setSide('sell')} className={`flex-1 rounded-md py-2 text-[10px] font-semibold ${side==='sell'?'bg-destructive/15 text-destructive':'text-muted-foreground'}`}>Sell / Short</button></div>
+              <form onSubmit={placePaperTrade} className="space-y-3">
+                <label className="block text-[10px] text-muted-foreground">Market pair<select value={selectedSymbol} onChange={e=>setSelectedSymbol(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2.5 font-mono text-xs text-foreground">{PAIRS.map(pair=><option key={pair.symbol} value={pair.symbol}>{pair.symbol}</option>)}</select></label>
+                <label className="block text-[10px] text-muted-foreground">Position size · units<input type="number" min="1000" max="1000000" step="1000" value={units} onChange={e=>setUnits(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-2.5 py-2.5 font-mono text-xs text-foreground"/></label>
+                <div className="grid grid-cols-2 gap-2"><label className="text-[10px] text-muted-foreground">Stop loss<input type="number" step="any" value={stopLoss} onChange={e=>setStopLoss(e.target.value)} placeholder="Optional" className="mt-1 w-full min-w-0 rounded-md border border-border bg-background px-2 py-2 font-mono text-[10px] text-foreground"/></label><label className="text-[10px] text-muted-foreground">Take profit<input type="number" step="any" value={takeProfit} onChange={e=>setTakeProfit(e.target.value)} placeholder="Optional" className="mt-1 w-full min-w-0 rounded-md border border-border bg-background px-2 py-2 font-mono text-[10px] text-foreground"/></label></div>
+                <div className="rounded-md border border-border bg-background p-2.5"><div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Indicative entry</span><b className="font-mono">{formatPrice(selected.price,selected.symbol)}</b></div><div className="mt-1 flex justify-between text-[10px]"><span className="text-muted-foreground">Order type</span><span>Market · simulated</span></div></div>
+                <button type="submit" disabled={savingTrade} className={`w-full rounded-md py-3 text-[11px] font-bold disabled:opacity-50 ${side==='buy'?'bg-primary text-primary-foreground':'bg-destructive text-destructive-foreground'}`}>{savingTrade?'Saving…':user?`${side==='buy'?'Buy':'Sell'} ${selected.symbol}`:'Sign in to practise'}</button>
               </form>
-            </section>
-
-            <section aria-label="Account summary" className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 xl:gap-4">
-              <Metric label="Market" value="Forex" sub="Global currency pairs" icon={<Activity size={15} />} />
-              <Metric label="Practice capital" value="$100,000" sub="Virtual · no cash value" icon={<Wallet size={15} />} />
-              <Metric label="Open positions" value={user ? String(openTrades.length).padStart(2, '0') : '—'} sub={user ? 'Your paper trades' : 'Sign in to save trades'} icon={<BarChart3 size={15} />} />
-              <Metric label="Session" value="24 / 5" sub="Market hours vary by venue" icon={<Clock3 size={15} />} />
-            </section>
-
-            <section aria-label="Market workspace" className="mb-8">
-              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-                <div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Market workspace</p><h2 className="mt-1 text-lg font-semibold tracking-tight">Chart &amp; order entry</h2></div>
-                <p className="text-[11px] text-muted-foreground">Review the market, then practise with a simulated order.</p>
-              </div>
-              <div className="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:gap-6">
-              <section className="min-w-0 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-md">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-4 sm:px-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 font-mono text-[11px] font-bold text-primary">{selected.symbol.slice(0, 3)}</div>
-                    <div><div className="flex items-center gap-2"><h2 className="font-mono text-base font-semibold">{selected.symbol}</h2><ChevronDown size={14} className="text-muted-foreground" /></div><div className="mt-0.5 text-[11px] text-muted-foreground">{selected.symbol.split('/').join(' · ')} <span className="mx-1.5">/</span> Forex</div></div>
-                  </div>
-                  <div className="flex items-center gap-4 sm:gap-5">
-                    <div className="text-right"><div className="font-mono text-lg font-semibold tracking-tight">{formatPrice(selected.price, selected.symbol)}</div><div className={`font-mono text-[11px] ${selected.change >= 0 ? 'text-primary' : 'text-destructive'}`}>{selected.change >= 0 ? '+' : ''}{selected.change.toFixed(2)}% today</div></div>
-                    <div className="hidden h-8 w-px bg-border sm:block" />
-                    <div className="hidden text-right sm:block"><div className="text-[10px] uppercase tracking-wider text-muted-foreground">Spread</div><div className="font-mono text-xs">{selected.spread} pips</div></div>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-2.5 sm:px-5">
-                  <div className="flex items-center gap-1 rounded-lg bg-background/75 p-1" aria-label="Chart timeframe">{INTERVALS.map((item) => <button key={item.value} onClick={() => setInterval(item.value)} className={`rounded-md px-2.5 py-1.5 font-mono text-[10px] transition ${interval === item.value ? 'bg-accent text-primary' : 'text-muted-foreground hover:text-foreground'}`}>{item.label}</button>)}</div>
-                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground"><span>High <b className="ml-1 font-mono font-medium text-foreground">{selected.high}</b></span><span className="text-border">/</span><span>Low <b className="ml-1 font-mono font-medium text-foreground">{selected.low}</b></span><button aria-label="Chart options" className="ml-1 rounded-md p-1.5 hover:bg-accent" onClick={() => toast('Chart controls are provided by TradingView.')}><SlidersHorizontal size={14} /></button></div>
-                </div>
-                <div className="chart-grid relative h-[360px] bg-background sm:h-[460px] 2xl:h-[520px]">
-                  <iframe key={chartUrl} title={`TradingView chart for ${selected.symbol}`} src={chartUrl} className="relative z-10 h-full w-full border-0" loading="lazy" allow="clipboard-write" />
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-4 py-2.5 text-[10px] text-muted-foreground sm:px-5"><span className="flex items-center gap-1.5"><ShieldCheck size={13} className="text-primary" /> Chart hosted by TradingView</span><span>Quotes in the ticket are sample-only and may differ from chart data.</span></div>
-              </section>
-
-              <section className="min-w-0 rounded-2xl border border-border/80 bg-card p-5 shadow-md sm:p-6 xl:sticky xl:top-32">
-                <div className="mb-5 flex items-start justify-between"><div><div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Practice order</div><h2 className="mt-1 text-lg font-semibold">Trade ticket</h2></div><button onClick={() => toast('Orders are simulated. No broker is connected.')} aria-label="Order information" className="rounded-md p-1.5 text-muted-foreground hover:bg-accent"><CircleHelp size={16} /></button></div>
-                <div className="mb-4 flex rounded-xl bg-background p-1">
-                  <button type="button" onClick={() => setSide('buy')} className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold transition ${side === 'buy' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}><ArrowUpRight size={15} /> Buy / Long</button>
-                  <button type="button" onClick={() => setSide('sell')} className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-xs font-semibold transition ${side === 'sell' ? 'bg-destructive/15 text-destructive' : 'text-muted-foreground hover:text-foreground'}`}><ArrowDownRight size={15} /> Sell / Short</button>
-                </div>
-                <form onSubmit={placePaperTrade} className="space-y-4">
-                  <div><label htmlFor="pair" className="mb-1.5 block text-[11px] font-medium text-muted-foreground">Currency pair</label><div className="relative"><select id="pair" value={selectedSymbol} onChange={(event) => setSelectedSymbol(event.target.value)} className="w-full appearance-none rounded-lg border border-border bg-background px-3 py-3 pr-9 font-mono text-sm text-foreground outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/10">{PAIRS.map((pair) => <option key={pair.symbol} value={pair.symbol}>{pair.symbol}</option>)}</select><ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" /></div></div>
-                  <div><div className="mb-1.5 flex items-center justify-between"><label htmlFor="units" className="text-[11px] font-medium text-muted-foreground">Position size</label><span className="text-[10px] text-muted-foreground">Units</span></div><input id="units" type="number" min="1000" max="1000000" step="1000" value={units} onChange={(event) => setUnits(event.target.value)} className="w-full rounded-lg border border-border bg-background px-3 py-3 font-mono text-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/70 focus:ring-2 focus:ring-primary/10" /></div>
-                  <div className="grid grid-cols-2 gap-3"><div><label htmlFor="stop" className="mb-1.5 block text-[11px] font-medium text-muted-foreground">Stop loss <span className="font-normal">(optional)</span></label><input id="stop" type="number" step="any" placeholder="—" value={stopLoss} onChange={(event) => setStopLoss(event.target.value)} className="w-full rounded-lg border border-border bg-background px-3 py-2.5 font-mono text-xs outline-none transition placeholder:text-muted-foreground focus:border-primary/70" /></div><div><label htmlFor="target" className="mb-1.5 block text-[11px] font-medium text-muted-foreground">Take profit <span className="font-normal">(optional)</span></label><input id="target" type="number" step="any" placeholder="—" value={takeProfit} onChange={(event) => setTakeProfit(event.target.value)} className="w-full rounded-lg border border-border bg-background px-3 py-2.5 font-mono text-xs outline-none transition placeholder:text-muted-foreground focus:border-primary/70" /></div></div>
-                  <div className="rounded-xl border border-border/70 bg-background/70 p-3.5"><div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Indicative entry</span><span className="font-mono font-medium">{formatPrice(selected.price, selected.symbol)}</span></div><div className="mt-2 flex justify-between text-[11px]"><span className="text-muted-foreground">Order type</span><span className="text-foreground">Market · simulated</span></div></div>
-                  <button type="submit" disabled={savingTrade} className={`flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold transition hover:brightness-105 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60 ${side === 'buy' ? 'bg-primary text-primary-foreground' : 'bg-destructive text-destructive-foreground'}`}>{savingTrade ? 'Saving paper order…' : user ? `${side === 'buy' ? 'Buy' : 'Sell'} ${selected.symbol}` : 'Sign in to practise'}<ArrowUpRight size={16} /></button>
-                </form>
-                <div className="mt-4 flex gap-2 rounded-lg bg-primary/5 p-3 text-[10px] leading-relaxed text-muted-foreground"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-primary" /><p>This creates a saved paper position only. No real order, deposit, withdrawal, or cash balance is connected.</p></div>
-              </section>
-              </div>
-            </section>
-
-            <section id="watchlist" className="grid scroll-mt-32 gap-5 xl:grid-cols-2 2xl:gap-6">
-              <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
-                <div className="flex items-center justify-between border-b border-border/70 px-4 py-4 sm:px-5"><div><h2 className="text-sm font-semibold">Watchlist</h2><p className="mt-0.5 text-[11px] text-muted-foreground">Major pairs · indicative sample quotes</p></div><button aria-label="Watchlist settings" onClick={() => toast('Showing the default major-pairs watchlist.')} className="rounded-lg p-2 text-muted-foreground hover:bg-accent"><SlidersHorizontal size={15} /></button></div>
-                <div className="divide-y divide-border/60">{PAIRS.map((pair) => <button key={pair.symbol} onClick={() => { setSelectedSymbol(pair.symbol); goTo('market') }} className={`grid w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-4 px-4 py-3 text-left transition hover:bg-accent/45 sm:grid-cols-[minmax(0,1fr)_100px_90px_70px] sm:px-5 ${selected.symbol === pair.symbol ? 'bg-primary/[0.035]' : ''}`}><span className="flex min-w-0 items-center gap-3"><span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-background font-mono text-[9px] font-semibold text-muted-foreground">{pair.symbol.slice(0, 3)}</span><span className="min-w-0"><span className="block truncate font-mono text-xs font-semibold">{pair.symbol}</span><span className="block text-[10px] text-muted-foreground">Spot FX</span></span></span><span className="text-right font-mono text-xs">{formatPrice(pair.price, pair.symbol)}</span><span className={`text-right font-mono text-[11px] ${pair.change >= 0 ? 'text-primary' : 'text-destructive'}`}>{pair.change > 0 ? '+' : ''}{pair.change.toFixed(2)}%</span><span className="hidden justify-end sm:flex">{pair.change >= 0 ? <ArrowUpRight size={15} className="text-primary" /> : <ArrowDownRight size={15} className="text-destructive" />}</span></button>)}</div>
-                <div className="border-t border-border/60 px-4 py-2.5 text-[10px] text-muted-foreground sm:px-5">Sample prices are for interface demonstration only.</div>
-              </div>
-
-              <div id="positions" className="scroll-mt-32 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-4 sm:px-5"><div><h2 className="text-sm font-semibold">Your practice trades</h2><p className="mt-0.5 text-[11px] text-muted-foreground">Positions are saved to your signed-in account</p></div><div className="flex rounded-lg bg-background p-1"><button onClick={() => setActiveView('open')} className={`rounded-md px-2.5 py-1.5 text-[10px] font-medium ${activeView === 'open' ? 'bg-accent text-primary' : 'text-muted-foreground'}`}>Open {user && <span className="ml-1 font-mono">{openTrades.length}</span>}</button><button onClick={() => setActiveView('history')} className={`rounded-md px-2.5 py-1.5 text-[10px] font-medium ${activeView === 'history' ? 'bg-accent text-primary' : 'text-muted-foreground'}`}>History</button></div></div>
-                {!user ? <div className="flex min-h-48 flex-col items-center justify-center px-5 text-center"><div className="mb-3 flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary"><Wallet size={19} /></div><h3 className="text-sm font-medium">Sign in to save your practice trades</h3><p className="mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground">Your paper positions and trade history will be private to your account.</p><button onClick={signIn} className="mt-4 rounded-lg border border-border px-3 py-2 text-xs font-semibold transition hover:bg-accent">Sign in with email</button></div> : tradesLoading ? <div className="space-y-3 p-5"><div className="h-10 animate-pulse rounded-lg bg-muted" /><div className="h-10 animate-pulse rounded-lg bg-muted" /></div> : (activeView === 'open' ? openTrades : closedTrades).length === 0 ? <div className="flex min-h-48 flex-col items-center justify-center px-5 text-center"><div className="mb-3 flex size-11 items-center justify-center rounded-full bg-accent text-primary"><BarChart3 size={19} /></div><h3 className="text-sm font-medium">{activeView === 'open' ? 'No open practice positions' : 'No closed trades yet'}</h3><p className="mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground">Select a pair and place a simulated order to see it here.</p></div> : <div className="overflow-x-auto"><table className="w-full min-w-[580px] text-left"><thead className="bg-background/55 text-[10px] uppercase tracking-wider text-muted-foreground"><tr><th className="px-4 py-3 font-medium sm:px-5">Pair / side</th><th className="px-3 py-3 font-medium">Size</th><th className="px-3 py-3 font-medium">Entry</th><th className="px-3 py-3 font-medium">{activeView === 'open' ? 'Risk levels' : 'Exit'}</th><th className="px-4 py-3 text-right font-medium sm:px-5">Action</th></tr></thead><tbody className="divide-y divide-border/60">{(activeView === 'open' ? openTrades : closedTrades).map((trade) => <tr key={trade.id} className="text-xs"><td className="px-4 py-3.5 sm:px-5"><div className="font-mono font-semibold">{trade.symbol}</div><div className={`mt-1 text-[10px] capitalize ${trade.side === 'buy' ? 'text-primary' : 'text-destructive'}`}>{trade.side === 'buy' ? 'Long' : 'Short'} · paper</div></td><td className="px-3 py-3.5 font-mono">{Number(trade.quantity).toLocaleString()}</td><td className="px-3 py-3.5 font-mono">{formatPrice(Number(trade.entryPrice), trade.symbol)}</td><td className="px-3 py-3.5 font-mono text-muted-foreground">{activeView === 'open' ? <span>{trade.stopLoss ? `SL ${formatPrice(Number(trade.stopLoss), trade.symbol)}` : '—'}{trade.takeProfit ? ` · TP ${formatPrice(Number(trade.takeProfit), trade.symbol)}` : ''}</span> : formatPrice(Number(trade.exitPrice), trade.symbol)}</td><td className="px-4 py-3.5 text-right sm:px-5">{activeView === 'open' && <button onClick={() => void closePaperTrade(trade)} className="rounded-md border border-border px-2.5 py-1.5 text-[10px] font-semibold text-muted-foreground transition hover:border-destructive/50 hover:text-destructive">Close</button>}</td></tr>)}</tbody></table></div>}
-              </div>
-            </section>
-
-            <footer className="mt-8 flex flex-col gap-3 border-t border-border/60 py-6 text-[11px] leading-relaxed text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><p>Northstar FX is a paper-trading interface for practice and education. It is not a brokerage or investment service.</p><span className="flex items-center gap-1.5"><ShieldCheck size={12} className="text-primary" /> No real funds or orders are handled</span></footer>
-          </div>
+            </div>}
+          </aside>
         </div>
       </div>
-      {authOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary">Northstar FX account</p><h2 id="auth-title" className="mt-1 text-xl font-semibold">{authMode === 'register' ? 'Create your account' : 'Welcome back'}</h2><p className="mt-1 text-xs text-muted-foreground">Your account is managed securely by Northstar FX.</p></div>
-              <button type="button" onClick={() => setAuthOpen(false)} className="rounded-lg p-2 text-muted-foreground hover:bg-accent" aria-label="Close sign in">✕</button>
-            </div>
-            <form onSubmit={submitAuth} className="space-y-3.5">
-              {authMode === 'register' && <label className="block text-xs font-medium text-muted-foreground">Full name<input required minLength={2} maxLength={80} autoComplete="name" value={authName} onChange={e => setAuthName(e.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-primary" placeholder="Your name" /></label>}
-              <label className="block text-xs font-medium text-muted-foreground">Email address<input required type="email" autoComplete="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-primary" placeholder="you@example.com" /></label>
-              <label className="block text-xs font-medium text-muted-foreground">Password<input required type="password" minLength={authMode === 'register' ? 10 : 1} maxLength={128} autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground outline-none focus:border-primary" placeholder={authMode === 'register' ? 'At least 10 characters' : 'Your password'} /></label>
-              <button disabled={authBusy} type="submit" className="mt-2 w-full rounded-lg bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-105 disabled:opacity-60">{authBusy ? 'Please wait…' : authMode === 'register' ? 'Create account' : 'Sign in'}</button>
-            </form>
-            <p className="mt-5 text-center text-xs text-muted-foreground">{authMode === 'register' ? 'Already have an account?' : 'New to Northstar FX?'} <button type="button" onClick={() => setAuthMode(authMode === 'register' ? 'login' : 'register')} className="font-semibold text-primary hover:underline">{authMode === 'register' ? 'Sign in' : 'Create account'}</button></p>
-            <p className="mt-3 text-center text-[10px] leading-relaxed text-muted-foreground">Use a unique password. Never share your password or M-Pesa PIN with anyone.</p>
-          </div>
-        </div>
-      )}
+
+      {authOpen && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="auth-title"><div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl"><div className="mb-5 flex items-start justify-between"><div><p className="text-[9px] font-semibold uppercase tracking-widest text-primary">Northstar FX account</p><h2 id="auth-title" className="mt-1 text-xl font-semibold">{authMode==='register'?'Create your account':'Welcome back'}</h2></div><button onClick={()=>setAuthOpen(false)} aria-label="Close" className="text-muted-foreground">✕</button></div><form onSubmit={submitAuth} className="space-y-3">{authMode==='register'&&<label className="block text-xs text-muted-foreground">Full name<input required minLength={2} maxLength={80} value={authName} onChange={e=>setAuthName(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground"/></label>}<label className="block text-xs text-muted-foreground">Email<input required type="email" value={authEmail} onChange={e=>setAuthEmail(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground"/></label><label className="block text-xs text-muted-foreground">Password<input required type="password" minLength={authMode==='register'?10:1} value={authPassword} onChange={e=>setAuthPassword(e.target.value)} className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground"/></label><button disabled={authBusy} className="w-full rounded-md bg-primary py-3 text-sm font-bold text-primary-foreground disabled:opacity-50">{authBusy?'Please wait…':authMode==='register'?'Create account':'Sign in'}</button></form><p className="mt-4 text-center text-xs text-muted-foreground">{authMode==='register'?'Already registered?':'New to Northstar FX?'} <button onClick={()=>setAuthMode(authMode==='register'?'login':'register')} className="font-semibold text-primary">{authMode==='register'?'Sign in':'Create account'}</button></p></div></div>}
     </main>
   )
+}
 }
 
 function RailButton({ children, label, active = false, onClick }: { children: React.ReactNode; label: string; active?: boolean; onClick: () => void }) {
