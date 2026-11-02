@@ -375,13 +375,13 @@ function TradingTerminal() {
 
       {authOpen && createPortal(
         <div
-          className="fixed inset-0 z-[2147483647] flex h-[100dvh] min-h-[100svh] w-screen items-start justify-center overflow-x-hidden overflow-y-auto overscroll-y-contain bg-black/90 px-3 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md touch-pan-y sm:items-center sm:px-6 sm:py-8"
+          style={{ position: 'fixed', inset: 0, zIndex: 2147483647, width: '100vw', height: '100vh', minHeight: '100dvh', boxSizing: 'border-box', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', padding: 'max(16px, env(safe-area-inset-top)) 12px max(16px, env(safe-area-inset-bottom))', background: 'rgba(0,0,0,0.94)' }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="auth-title"
           onMouseDown={(event) => { if (event.target === event.currentTarget) setAuthOpen(false) }}
         >
-          <section className="my-3 max-h-[calc(100dvh-1.5rem)] w-full max-w-[440px] shrink-0 overflow-x-hidden overflow-y-auto overscroll-y-contain rounded-3xl border border-border/80 bg-card p-5 shadow-[0_28px_100px_-24px_rgba(0,0,0,0.95)] sm:my-auto sm:max-h-[calc(100dvh-4rem)] sm:p-8">
+          <section style={{ position: 'relative', width: '100%', maxWidth: 440, maxHeight: 'calc(100dvh - 32px)', flexShrink: 0, overflowY: 'auto', overflowX: 'hidden', marginTop: 8, marginBottom: 8, padding: 20, boxSizing: 'border-box', borderRadius: 24, border: '1px solid rgba(148,163,184,0.35)', background: '#111827', color: '#f8fafc', boxShadow: '0 28px 100px -24px rgba(0,0,0,0.95)' }}>
             <div className="mb-7 flex items-start justify-between gap-4">
               <div>
                 <div className="mb-4 flex size-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary"><Activity size={21}/></div>
