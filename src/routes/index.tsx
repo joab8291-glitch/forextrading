@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -372,15 +373,15 @@ function TradingTerminal() {
         </div>
       </div>
 
-      {authOpen && (
+      {authOpen && createPortal(
         <div
-          className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-black/75 px-4 py-5 backdrop-blur-md sm:px-6 sm:py-8"
+          className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto overscroll-contain bg-black/80 px-3 py-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:items-center sm:px-6 sm:py-8"
           role="dialog"
           aria-modal="true"
           aria-labelledby="auth-title"
           onMouseDown={(event) => { if (event.target === event.currentTarget) setAuthOpen(false) }}
         >
-          <section className="my-auto max-h-[calc(100dvh-2.5rem)] w-full max-w-[440px] overflow-y-auto rounded-3xl border border-border/80 bg-card p-6 shadow-[0_28px_100px_-24px_rgba(0,0,0,0.85)] sm:max-h-[calc(100dvh-4rem)] sm:p-8">
+          <section className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-[440px] shrink-0 overflow-y-auto overscroll-contain rounded-3xl border border-border/80 bg-card p-5 shadow-[0_28px_100px_-24px_rgba(0,0,0,0.85)] sm:max-h-[calc(100dvh-4rem)] sm:p-8">
             <div className="mb-7 flex items-start justify-between gap-4">
               <div>
                 <div className="mb-4 flex size-11 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary"><Activity size={21}/></div>
@@ -422,7 +423,8 @@ function TradingTerminal() {
               </button>
             </p>
           </section>
-        </div>
+        </div>,
+        document.body,
       )}
     </main>
   )
