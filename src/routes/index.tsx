@@ -6,23 +6,16 @@ import {
   Activity,
   ArrowDownRight,
   ArrowUpRight,
-  BarChart3,
-  Bell,
-  ChevronDown,
-  CircleHelp,
-  Clock3,
   LogIn,
   LogOut,
-  Menu,
-  Search,
   ShieldCheck,
-  SlidersHorizontal,
   Wallet,
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { apiRequest, clearToken, getToken, setToken } from '@/lib/api'
 import type { SimulatedTradesRow } from '@/lib/db-types'
+import { SiteHeader } from '@/components/SiteHeader'
 
 const PAIRS = [
   { symbol: 'EUR/USD', tvSymbol: 'OANDA:EURUSD', price: 1.08426, change: 0.18, spread: '0.1', high: '1.08641', low: '1.08182' },
@@ -71,7 +64,6 @@ function TradingTerminal() {
   const [authBusy, setAuthBusy] = useState(false)
   const [savingTrade, setSavingTrade] = useState(false)
   const [activeView, setActiveView] = useState<'open' | 'history'>('open')
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [depositAmount, setDepositAmount] = useState('1000')
   const [depositPhone, setDepositPhone] = useState('')
   const [depositBusy, setDepositBusy] = useState(false)
@@ -307,68 +299,263 @@ function TradingTerminal() {
     }
   }
 
-  function goTo(id: string) {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    setMobileNavOpen(false)
-  }
-
-  const [featuresOpen, setFeaturesOpen] = useState(false)
+  const isUp = selected.change >= 0
+  const units_n = Number(units) || 0
+  const lots = units_n / 100000
+  const positionValue = units_n * selected.price
+  const quoteCurrency = selected.symbol.split('/')[1]
+  const shown = activeView === 'open' ? openTrades : closedTrades
+  const sideTone = side === 'buy' ? 'bg-up text-[#04120d] hover:brightness-110' : 'bg-down text-[#1c0508] hover:brightness-110'
 
   return (
-    <main className="terminal-shell min-h-dvh overflow-hidden text-foreground">
-      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/95 backdrop-blur-xl">
-        <div className="flex h-14 items-center justify-between gap-3 px-3 sm:px-5">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Activity size={18}/></div>
-            <div className="min-w-0"><div className="font-mono text-[13px] font-bold tracking-[0.14em]">NORTHSTAR <span className="text-primary">FX</span></div><div className="hidden text-[9px] uppercase tracking-[0.16em] text-muted-foreground sm:block">Markets workspace</div></div>
-            <div className="ml-3 hidden h-7 w-px bg-border lg:block"/>
-            <div className="relative">
-              <button type="button" aria-expanded={featuresOpen} aria-haspopup="menu" onClick={() => setFeaturesOpen(value => !value)} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:border-primary/40 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
-                <Menu size={16}/> Features <ChevronDown size={14} className={featuresOpen ? 'rotate-180 transition-transform' : 'transition-transform'}/>
-              </button>
-              {featuresOpen && <><button aria-label="Close features menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setFeaturesOpen(false)}/><div role="menu" className="absolute left-0 top-full z-50 mt-2 w-60 overflow-hidden rounded-2xl border border-border bg-card p-2 shadow-2xl">
-                <div className="px-3 pb-2 pt-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Workspace features</div>
-                <a role="menuitem" href="/" onClick={() => setFeaturesOpen(false)} className="flex items-center gap-3 rounded-xl bg-accent px-3 py-3 text-sm font-semibold text-primary"><BarChart3 size={17}/> Live chart <span className="ml-auto text-[9px]">OPEN</span></a>
-                <a role="menuitem" href="/trade" onClick={() => setFeaturesOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-foreground transition hover:bg-accent"><Activity size={17} className="text-primary"/> Practice trading</a>
-                <a role="menuitem" href="/trades" onClick={() => setFeaturesOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-foreground transition hover:bg-accent"><Wallet size={17} className="text-primary"/> Positions & history</a>
-                <a role="menuitem" href="/wallet" onClick={() => setFeaturesOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-foreground transition hover:bg-accent"><ArrowUpRight size={17} className="text-primary"/> Wallet & deposits</a>
-              </div></>}
+    <div className="min-h-dvh bg-background text-foreground">
+      <SiteHeader
+        actions={
+          <>
+            <span className="hidden items-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 text-sm text-muted-foreground lg:inline-flex">
+              Practice balance <strong className="num font-semibold text-foreground">$100,000</strong>
+            </span>
+            {authLoading ? (
+              <div className="h-10 w-24 animate-pulse rounded-lg bg-muted" />
+            ) : user ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden max-w-48 truncate text-sm text-muted-foreground sm:inline">{user.email}</span>
+                <button type="button" onClick={() => void signOut()} className="btn btn-outline btn-sm"><LogOut size={16} />Sign out</button>
+              </div>
+            ) : (
+              <button type="button" onClick={signIn} className="btn btn-primary btn-sm"><LogIn size={16} />Sign in</button>
+            )}
+          </>
+        }
+      />
+
+      <main className="mx-auto w-full max-w-[1680px] px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        {/* Quote header: the selected market and its live-style numbers */}
+        <section className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6" aria-label="Selected market">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{selected.symbol}</h1>
+              <span className="rounded-md bg-secondary px-2.5 py-1 text-sm font-medium text-muted-foreground">Spot forex</span>
             </div>
+            <p className="mt-2 text-sm text-muted-foreground">Indicative quote. Chart data comes from OANDA through TradingView.</p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden rounded-md border border-border px-2.5 py-1.5 font-mono text-[10px] text-muted-foreground sm:inline">PAPER · $100,000</span>
-            {authLoading ? <div className="h-8 w-20 animate-pulse rounded-md bg-muted"/> : user ? <button onClick={() => void signOut()} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-[11px] hover:bg-accent"><span className="size-1.5 rounded-full bg-primary"/><span className="max-w-28 truncate">{user.email}</span><LogOut size={13}/></button> : <button type="button" onClick={signIn} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-md shadow-primary/20 transition duration-200 hover:-translate-y-0.5 hover:brightness-110 hover:shadow-lg hover:shadow-primary/25 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 active:translate-y-0"><LogIn size={17} strokeWidth={2.25}/>Sign in</button>}
+          <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
+            <div>
+              <div className="num text-4xl font-semibold tracking-tight sm:text-5xl">{formatPrice(selected.price, selected.symbol)}</div>
+              <div className={`mt-1 inline-flex items-center gap-1 text-sm font-medium ${isUp ? 'text-up' : 'text-down'}`}>
+                {isUp ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                <span className="num">{isUp ? '+' : ''}{selected.change.toFixed(2)}% today</span>
+              </div>
+            </div>
+            <dl className="grid grid-cols-3 gap-x-8 gap-y-1 text-sm">
+              <div><dt className="text-muted-foreground">Day high</dt><dd className="num mt-1 font-medium">{selected.high}</dd></div>
+              <div><dt className="text-muted-foreground">Day low</dt><dd className="num mt-1 font-medium">{selected.low}</dd></div>
+              <div><dt className="text-muted-foreground">Spread</dt><dd className="num mt-1 font-medium">{selected.spread} pips</dd></div>
+            </dl>
           </div>
+        </section>
+
+        {/* Pair picker for small screens */}
+        <div className="-mx-4 mt-8 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 xl:hidden" role="tablist" aria-label="Markets">
+          {PAIRS.map((pair) => (
+            <button
+              key={pair.symbol}
+              type="button"
+              role="tab"
+              aria-selected={pair.symbol === selectedSymbol}
+              onClick={() => setSelectedSymbol(pair.symbol)}
+              className={`shrink-0 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${pair.symbol === selectedSymbol ? 'border-primary/60 bg-accent text-accent-foreground' : 'border-border bg-card text-muted-foreground hover:text-foreground'}`}
+            >
+              {pair.symbol}
+            </button>
+          ))}
         </div>
 
-      </header>
+        {/* Workspace: markets, chart, trade ticket */}
+        <div className="mt-6 grid gap-6 xl:mt-8 xl:grid-cols-[280px_minmax(0,1fr)_360px]">
+          <aside className="panel hidden self-start xl:block" aria-label="Markets">
+            <div className="panel-head"><h2 className="text-base font-semibold">Markets</h2><span className="text-sm text-muted-foreground">{PAIRS.length} pairs</span></div>
+            <ul className="p-2">
+              {PAIRS.map((pair) => {
+                const active = pair.symbol === selectedSymbol
+                const up = pair.change >= 0
+                return (
+                  <li key={pair.symbol}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSymbol(pair.symbol)}
+                      aria-pressed={active}
+                      className={`flex w-full items-center justify-between gap-3 rounded-lg px-3.5 py-3 text-left transition-colors ${active ? 'bg-accent' : 'hover:bg-secondary'}`}
+                    >
+                      <span className="min-w-0">
+                        <span className={`block text-sm font-semibold ${active ? 'text-accent-foreground' : ''}`}>{pair.symbol}</span>
+                        <span className="num mt-0.5 block text-sm text-muted-foreground">{formatPrice(pair.price, pair.symbol)}</span>
+                      </span>
+                      <span className={`num inline-flex items-center gap-1 text-sm font-medium ${up ? 'text-up' : 'text-down'}`}>
+                        {up ? <ArrowUpRight size={15} /> : <ArrowDownRight size={15} />}
+                        {up ? '+' : ''}{pair.change.toFixed(2)}%
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </aside>
 
-      <div className="flex min-h-[calc(100dvh-56px)]">
-
-
-        <div className="grid min-w-0 flex-1 grid-cols-1">
-          <section className="min-w-0">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-3 py-3 sm:px-5">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 font-mono text-[10px] font-bold text-primary">{selected.symbol.slice(0,3)}</div>
-                <div className="min-w-0"><div className="flex items-center gap-2"><h1 className="font-mono text-base font-bold">{selected.symbol}</h1><span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] text-primary">FOREX</span></div><div className="text-[10px] text-muted-foreground">Spot market · indicative quote</div></div>
-                <div className="ml-2 hidden sm:block"><div className="text-xs font-semibold text-primary">OANDA market feed</div><div className="text-[10px] text-muted-foreground">Live chart · TradingView</div></div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <label className="sr-only" htmlFor="chart-pair">Market pair</label>
-                <select id="chart-pair" value={selectedSymbol} onChange={event => setSelectedSymbol(event.target.value)} className="rounded-lg border border-border bg-card px-3 py-2 font-mono text-[11px] text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">{PAIRS.map(pair=><option key={pair.symbol} value={pair.symbol}>{pair.symbol}</option>)}</select>
-                <div className="flex items-center gap-1 rounded-lg bg-card p-1" aria-label="Chart timeframe">{INTERVALS.map(item=><button key={item.value} onClick={()=>setInterval(item.value)} className={`rounded-md px-2.5 py-1.5 font-mono text-[10px] ${interval===item.value?'bg-accent text-primary':'text-muted-foreground hover:text-foreground'}`}>{item.label}</button>)}</div>
+          <section className="panel min-w-0 self-start overflow-hidden" aria-label="Price chart">
+            <div className="panel-head">
+              <h2 className="text-base font-semibold">Chart</h2>
+              <div className="segmented" role="group" aria-label="Chart timeframe">
+                {INTERVALS.map((item) => (
+                  <button key={item.value} type="button" aria-pressed={interval === item.value} onClick={() => setInterval(item.value)}>{item.label}</button>
+                ))}
               </div>
             </div>
-            <div className="chart-grid h-[calc(100dvh-125px)] min-h-[420px] bg-background xl:h-[calc(100dvh-125px)]">
-              <iframe key={chartUrl} title={`TradingView chart for ${selected.symbol}`} src={chartUrl} className="h-full w-full border-0" loading="eager" allow="clipboard-write"/>
+            <div className="h-[460px] bg-background sm:h-[540px] xl:h-[640px]">
+              <iframe key={chartUrl} title={`TradingView chart for ${selected.symbol}`} src={chartUrl} className="h-full w-full border-0" loading="eager" allow="clipboard-write" />
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 px-4 py-2 text-[9px] text-muted-foreground"><span className="flex items-center gap-1.5"><ShieldCheck size={12} className="text-primary"/>Live chart powered by TradingView · OANDA</span><span>Practice environment · Quotes shown in the trade ticket are indicative samples</span></div>
+            <div className="flex items-center gap-2 border-t border-border px-5 py-3 text-sm text-muted-foreground">
+              <ShieldCheck size={16} className="shrink-0 text-primary" />
+              Practice environment. Quotes in the trade ticket are indicative samples.
+            </div>
           </section>
 
+          <div className="space-y-6">
+            <form onSubmit={placePaperTrade} className="panel" aria-label="Paper trade ticket">
+              <div className="panel-head"><h2 className="text-base font-semibold">New paper trade</h2><span className="text-sm text-muted-foreground">{selected.symbol}</span></div>
+              <div className="panel-body space-y-5">
+                <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-background p-1.5" role="group" aria-label="Order side">
+                  <button type="button" aria-pressed={side === 'buy'} onClick={() => setSide('buy')} className={`h-11 rounded-lg text-sm font-semibold transition-colors ${side === 'buy' ? 'bg-up text-[#04120d]' : 'text-muted-foreground hover:text-foreground'}`}>Buy</button>
+                  <button type="button" aria-pressed={side === 'sell'} onClick={() => setSide('sell')} className={`h-11 rounded-lg text-sm font-semibold transition-colors ${side === 'sell' ? 'bg-down text-[#1c0508]' : 'text-muted-foreground hover:text-foreground'}`}>Sell</button>
+                </div>
 
+                <div>
+                  <label htmlFor="trade-units" className="field-label">Size in units</label>
+                  <input id="trade-units" className="field num" type="number" inputMode="numeric" min={1000} max={1000000} step={1000} value={units} onChange={(e) => setUnits(e.target.value)} />
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {['1000', '10000', '50000', '100000'].map((preset) => (
+                      <button key={preset} type="button" onClick={() => setUnits(preset)} className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${units === preset ? 'border-primary/60 bg-accent text-accent-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}>
+                        {Number(preset).toLocaleString()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="trade-sl" className="field-label">Stop loss</label>
+                    <input id="trade-sl" className="field num" type="number" step="any" inputMode="decimal" placeholder="Optional" value={stopLoss} onChange={(e) => setStopLoss(e.target.value)} />
+                  </div>
+                  <div>
+                    <label htmlFor="trade-tp" className="field-label">Take profit</label>
+                    <input id="trade-tp" className="field num" type="number" step="any" inputMode="decimal" placeholder="Optional" value={takeProfit} onChange={(e) => setTakeProfit(e.target.value)} />
+                  </div>
+                </div>
+
+                <dl className="space-y-3 rounded-xl bg-background p-4 text-sm">
+                  <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Entry price</dt><dd className="num font-medium">{formatPrice(selected.price, selected.symbol)}</dd></div>
+                  <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Size in lots</dt><dd className="num font-medium">{lots.toLocaleString(undefined, { maximumFractionDigits: 2 })}</dd></div>
+                  <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Position value</dt><dd className="num font-medium">{positionValue.toLocaleString(undefined, { maximumFractionDigits: 0 })} {quoteCurrency}</dd></div>
+                </dl>
+
+                <button type="submit" disabled={savingTrade} className={`btn w-full ${sideTone}`}>
+                  {savingTrade ? 'Saving trade…' : user ? `${side === 'buy' ? 'Buy' : 'Sell'} ${selected.symbol}` : 'Sign in to trade'}
+                </button>
+                <p className="text-center text-sm text-muted-foreground">Practice funds only. No real orders are placed.</p>
+              </div>
+            </form>
+
+            <form onSubmit={startDeposit} className="panel" aria-label="Fund cash wallet">
+              <div className="panel-head"><h2 className="text-base font-semibold">Cash wallet</h2><Wallet size={18} className="text-muted-foreground" /></div>
+              <div className="panel-body space-y-5">
+                <div>
+                  <div className="text-sm text-muted-foreground">Balance in KES</div>
+                  <div className="num mt-1 text-3xl font-semibold tracking-tight">
+                    {walletBalance === null ? '—' : walletBalance.toLocaleString('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 2 })}
+                  </div>
+                  {!user && <p className="field-hint">Sign in to see your wallet balance.</p>}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="deposit-amount" className="field-label">Amount (KES)</label>
+                    <input id="deposit-amount" className="field num" type="number" min={100} max={100000} step={1} value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} />
+                  </div>
+                  <div>
+                    <label htmlFor="deposit-phone" className="field-label">M-Pesa number</label>
+                    <input id="deposit-phone" className="field num" type="tel" inputMode="tel" placeholder="07XXXXXXXX" value={depositPhone} onChange={(e) => setDepositPhone(e.target.value)} />
+                  </div>
+                </div>
+                <button type="submit" disabled={depositBusy || Boolean(depositRequestId)} className="btn btn-outline w-full">
+                  {depositBusy ? 'Sending prompt…' : depositRequestId ? 'Waiting for confirmation…' : user ? 'Request M-Pesa prompt' : 'Sign in to deposit'}
+                </button>
+                {depositMessage && <p aria-live="polite" className="rounded-lg bg-background p-3.5 text-sm leading-relaxed text-secondary-foreground">{depositMessage}</p>}
+                <p className="text-sm text-muted-foreground">KES 100 to 100,000. Your cash wallet is separate from the practice balance.</p>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+
+        {/* Positions */}
+        <section className="panel mt-6 overflow-hidden" aria-label="Paper positions">
+          <div className="panel-head">
+            <div className="segmented" role="tablist" aria-label="Position view">
+              <button type="button" role="tab" aria-selected={activeView === 'open'} onClick={() => setActiveView('open')}>Open ({openTrades.length})</button>
+              <button type="button" role="tab" aria-selected={activeView === 'history'} onClick={() => setActiveView('history')}>History ({closedTrades.length})</button>
+            </div>
+            {user && <button type="button" onClick={() => void refreshTrades()} className="btn btn-outline btn-sm">Refresh</button>}
+          </div>
+          {!user ? (
+            <div className="px-6 py-14 text-center">
+              <h3 className="text-lg font-semibold">Sign in to see your positions</h3>
+              <p className="mx-auto mt-2 max-w-md text-muted-foreground">Your paper trades are saved to your account, so you can pick up where you left off on any device.</p>
+              <button type="button" onClick={signIn} className="btn btn-primary mt-6">Sign in</button>
+            </div>
+          ) : tradesLoading ? (
+            <div className="px-6 py-14 text-center text-muted-foreground">Loading your trades…</div>
+          ) : shown.length === 0 ? (
+            <div className="px-6 py-14 text-center">
+              <h3 className="text-lg font-semibold">{activeView === 'open' ? 'No open positions' : 'No closed trades yet'}</h3>
+              <p className="mx-auto mt-2 max-w-md text-muted-foreground">{activeView === 'open' ? 'Pick a market, set a size and place a paper trade from the ticket above.' : 'Trades you close will show up here with their exit price.'}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border text-muted-foreground">
+                    <th scope="col" className="px-6 py-3.5 font-medium">Market</th>
+                    <th scope="col" className="px-6 py-3.5 font-medium">Side</th>
+                    <th scope="col" className="px-6 py-3.5 font-medium">Units</th>
+                    <th scope="col" className="px-6 py-3.5 font-medium">Entry</th>
+                    {activeView === 'open' ? (<><th scope="col" className="px-6 py-3.5 font-medium">Stop loss</th><th scope="col" className="px-6 py-3.5 font-medium">Take profit</th></>) : (<th scope="col" className="px-6 py-3.5 font-medium">Exit</th>)}
+                    <th scope="col" className="px-6 py-3.5 text-right font-medium"><span className="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {shown.map((trade) => (
+                    <tr key={trade.id} className="transition-colors hover:bg-secondary/50">
+                      <td className="px-6 py-4 font-semibold">{trade.symbol}</td>
+                      <td className={`px-6 py-4 font-medium ${trade.side === 'buy' ? 'text-up' : 'text-down'}`}>{trade.side === 'buy' ? 'Long' : 'Short'}</td>
+                      <td className="num px-6 py-4">{Number(trade.quantity).toLocaleString()}</td>
+                      <td className="num px-6 py-4">{formatPrice(Number(trade.entryPrice), trade.symbol)}</td>
+                      {activeView === 'open' ? (
+                        <>
+                          <td className="num px-6 py-4 text-muted-foreground">{trade.stopLoss ?? '—'}</td>
+                          <td className="num px-6 py-4 text-muted-foreground">{trade.takeProfit ?? '—'}</td>
+                        </>
+                      ) : (
+                        <td className="num px-6 py-4 text-muted-foreground">{trade.exitPrice ?? '—'}</td>
+                      )}
+                      <td className="px-6 py-4 text-right">
+                        {activeView === 'open' && <button type="button" onClick={() => void closePaperTrade(trade)} className="btn btn-outline btn-sm hover:border-down hover:text-down">Close</button>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </main>
 
       {authOpen && createPortal(
         <div
@@ -426,20 +613,8 @@ function TradingTerminal() {
         </div>,
         document.body,
       )}
-    </main>
+    </div>
   )
-}
-
-function RailButton({ children, label, active = false, onClick }: { children: React.ReactNode; label: string; active?: boolean; onClick: () => void }) {
-  return <button title={label} aria-label={label} onClick={onClick} className={`flex size-10 items-center justify-center rounded-xl transition ${active ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'}`}>{children}</button>
-}
-
-function MobileNavButton({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
-  return <button onClick={onClick} className="rounded-lg border border-border bg-background px-3 py-2.5 text-xs font-medium text-foreground hover:bg-accent">{children}</button>
-}
-
-function Metric({ label, value, sub, icon }: { label: string; value: string; sub: string; icon: React.ReactNode }) {
-  return <div className="rounded-xl border border-border/80 bg-card px-3.5 py-3.5 shadow-sm sm:px-4"><div className="mb-2.5 flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-muted-foreground"><span>{label}</span><span className="text-primary/75">{icon}</span></div><div className="font-mono text-lg font-semibold tracking-tight sm:text-xl">{value}</div><div className="mt-1 text-[10px] text-muted-foreground">{sub}</div></div>
 }
 
 function formatPrice(price: number, symbol: string) {

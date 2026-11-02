@@ -1,4 +1,18 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ArrowLeft, ChartCandlestick } from 'lucide-react'
+import { ChartCandlestick } from 'lucide-react'
+import { PageFrame } from '@/components/SiteHeader'
+
 export const Route = createFileRoute('/trade')({ component: TradePage })
-function TradePage(){return <main className="min-h-dvh bg-background text-foreground"><header className="flex h-14 items-center justify-between border-b border-border px-4 sm:px-8"><Link to="/" className="flex items-center gap-2 text-sm font-semibold"><ArrowLeft size={16}/> Back to charts</Link><span className="font-mono text-xs font-bold tracking-widest">NORTHSTAR <span className="text-primary">FX</span></span></header><div className="mx-auto max-w-3xl px-4 py-16 text-center"><div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary"><ChartCandlestick size={22}/></div><h1 className="mt-5 text-3xl font-semibold">Practice trading</h1><p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">Your paper-trading ticket is available in the right-hand panel of the chart workspace. Select a market, choose Buy or Sell, set your position size and optional risk levels, then submit a simulated order.</p><Link to="/" className="mt-7 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-primary-foreground">Open chart & trade ticket</Link></div></main>}
+
+function TradePage() {
+  return (
+    <PageFrame title="Practice trading" description="Place simulated trades against indicative prices. Nothing here uses real money." width="max-w-3xl">
+      <section className="panel px-6 py-12 text-center sm:px-10">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground"><ChartCandlestick size={26} /></div>
+        <h2 className="mt-6 text-xl font-semibold">The trade ticket lives in the terminal</h2>
+        <p className="mx-auto mt-3 max-w-lg leading-relaxed text-muted-foreground">Choose a market, pick Buy or Sell, set your size and optional stop loss and take profit, then place the trade next to the live chart.</p>
+        <Link to="/" className="btn btn-primary mt-8">Open the terminal</Link>
+      </section>
+    </PageFrame>
+  )
+}
