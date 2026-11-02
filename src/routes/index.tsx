@@ -378,7 +378,6 @@ function TradingTerminal() {
     </main>
   )
 }
-}
 
 function RailButton({ children, label, active = false, onClick }: { children: React.ReactNode; label: string; active?: boolean; onClick: () => void }) {
   return <button title={label} aria-label={label} onClick={onClick} className={`flex size-10 items-center justify-center rounded-xl transition ${active ? 'bg-accent text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'}`}>{children}</button>
