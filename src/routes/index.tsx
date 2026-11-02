@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { apiRequest, clearToken, getToken, setToken } from '@/lib/api'
+import { apiRequest, clearToken, getToken, setToken, wakeServer } from '@/lib/api'
 import type { SimulatedTradesRow } from '@/lib/db-types'
 import { SiteHeader } from '@/components/SiteHeader'
 
@@ -62,6 +62,8 @@ function TradingTerminal() {
   const [authEmail, setAuthEmail] = useState('')
   const [authPassword, setAuthPassword] = useState('')
   const [authBusy, setAuthBusy] = useState(false)
+  const [authError, setAuthError] = useState('')
+  const [authNotice, setAuthNotice] = useState('')
   const [savingTrade, setSavingTrade] = useState(false)
   const [activeView, setActiveView] = useState<'open' | 'history'>('open')
   const [depositAmount, setDepositAmount] = useState('1000')
@@ -115,6 +117,10 @@ function TradingTerminal() {
       .finally(() => { if (active) setAuthLoading(false) })
     return () => { active = false }
   }, [])
+
+  // The API sits on free hosting that sleeps when idle. Waking it on page load means
+  // it is usually ready by the time someone opens the sign-in form.
+  useEffect(() => { wakeServer() }, [])
 
   useEffect(() => {
     if (!authOpen) return
@@ -233,21 +239,33 @@ function TradingTerminal() {
 
   function signIn() {
     setAuthMode('login')
+    setAuthError('')
+    setAuthNotice('')
     setAuthOpen(true)
   }
 
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setAuthBusy(true)
+    setAuthError('')
+    setAuthNotice('')
+    // Free hosting can take up to a minute to wake up; say so instead of looking frozen.
+    const wakeNotice = window.setTimeout(() => setAuthNotice('Still working. The server was asleep and is starting up, which can take up to a minute.'), 4000)
     try {
       const endpoint = authMode === 'register' ? '/forex/auth/register' : '/forex/auth/login'
       const result = await apiRequest<{ token: string; user: NonNullable<MarketUser> }>(endpoint, {
         method: 'POST', body: JSON.stringify({ email: authEmail.trim(), password: authPassword, displayName: authName.trim() }),
-      })
+      }, { timeoutMs: 75000 })
       setToken(result.token); setUser(result.user); setAuthOpen(false); setAuthPassword('')
-      toast.success(authMode === 'register' ? 'Your Forex account is ready.' : 'Welcome back.')
-    } catch (error) { toast.error(error instanceof Error ? error.message : 'Could not authenticate.') }
-    finally { setAuthBusy(false) }
+      toast.success(authMode === 'register' ? 'Your account is created and saved. You are signed in.' : 'Welcome back.')
+    } catch (error) {
+      // Shown inside the dialog: toasts render underneath the full-screen sign-in overlay.
+      setAuthError(error instanceof Error ? error.message : 'Could not authenticate.')
+    } finally {
+      window.clearTimeout(wakeNotice)
+      setAuthNotice('')
+      setAuthBusy(false)
+    }
   }
 
   async function signOut() {
@@ -589,15 +607,21 @@ function TradingTerminal() {
               <input id="auth-password" required type="password" minLength={authMode === 'register' ? 10 : 1} autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="gh-input" />
               {authMode === 'register' && <p style={{ margin: '6px 0 0', fontSize: 12, color: '#8b949e' }}>Use at least 10 characters.</p>}
             </div>
+            {authError && (
+              <div role="alert" style={{ marginBottom: 16, padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(248,81,73,0.4)', background: 'rgba(248,81,73,0.1)', color: '#ffa198', fontSize: 14, lineHeight: 1.5 }}>{authError}</div>
+            )}
+            {authNotice && (
+              <div role="status" style={{ marginBottom: 16, padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(56,139,253,0.4)', background: 'rgba(56,139,253,0.1)', color: '#9ecbff', fontSize: 14, lineHeight: 1.5 }}>{authNotice}</div>
+            )}
             <button type="submit" disabled={authBusy} className="gh-button">
-              {authBusy ? 'Please wait…' : authMode === 'register' ? 'Create account' : 'Sign in'}
+              {authBusy ? (authMode === 'register' ? 'Creating account…' : 'Signing in…') : authMode === 'register' ? 'Create account' : 'Sign in'}
             </button>
           </form>
 
           <div style={{ width: '100%', maxWidth: 340, boxSizing: 'border-box', marginTop: 16, padding: 16, borderRadius: 6, border: '1px solid #30363d', textAlign: 'center', fontSize: 14, color: '#e6edf3' }}>
             {authMode === 'register' ? 'Already have an account?' : 'New to Northstar FX?'}
             {' '}
-            <button type="button" onClick={() => { setAuthMode(authMode === 'register' ? 'login' : 'register'); setAuthPassword('') }} style={{ padding: 0, border: 0, background: 'none', color: '#4493f8', font: 'inherit', cursor: 'pointer' }} className="hover:underline">
+            <button type="button" onClick={() => { setAuthMode(authMode === 'register' ? 'login' : 'register'); setAuthPassword(''); setAuthError(''); setAuthNotice('') }} style={{ padding: 0, border: 0, background: 'none', color: '#4493f8', font: 'inherit', cursor: 'pointer' }} className="hover:underline">
               {authMode === 'register' ? 'Sign in' : 'Create an account'}
             </button>
           </div>
