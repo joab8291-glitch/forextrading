@@ -99,10 +99,10 @@ function TradingTerminal() {
     staleTime: 1000,
   })
   const liveQuote = marketData?.quotes.find((quote) => quote.symbol === selectedSymbol)
-  const selectedPrice = liveQuote?.price && liveQuote.timestamp && Date.now()/1000-liveQuote.timestamp < 30 ? liveQuote.price : null
+  const selectedPrice = liveQuote?.price && liveQuote.timestamp && Date.now()/1000-liveQuote.timestamp < 120 ? liveQuote.price : null
   const openTrades = trades.filter((trade) => trade.status === 'open')
   const closedTrades = trades.filter((trade) => trade.status === 'closed')
-  const floatingPnl = openTrades.reduce((sum, trade) => { const q = marketData?.quotes.find((item) => item.symbol === trade.symbol); if (!q?.timestamp || Date.now()/1000-q.timestamp > 30) return sum; const exit = trade.side === 'buy' ? Number(q.bid) : Number(q.ask); const raw = Number(trade.quantity) * (exit-Number(trade.entryPrice)) * (trade.side === 'buy' ? 1 : -1); return sum + (trade.symbol.endsWith('/USD') ? raw : raw/exit); }, 0)
+  const floatingPnl = openTrades.reduce((sum, trade) => { const q = marketData?.quotes.find((item) => item.symbol === trade.symbol); if (!q?.timestamp || Date.now()/1000-q.timestamp > 120) return sum; const exit = trade.side === 'buy' ? Number(q.bid) : Number(q.ask); const raw = Number(trade.quantity) * (exit-Number(trade.entryPrice)) * (trade.side === 'buy' ? 1 : -1); return sum + (trade.symbol.endsWith('/USD') ? raw : raw/exit); }, 0)
 
   const chartUrl = useMemo(() => {
     const params = new URLSearchParams({
@@ -353,7 +353,7 @@ function TradingTerminal() {
     if (!user) return
     const quote = marketData?.quotes.find((item) => item.symbol === trade.symbol)
     const exitPrice = trade.side === 'buy' ? quote?.bid : quote?.ask
-    if (!exitPrice || !quote?.timestamp || Date.now()/1000-quote.timestamp > 30) { toast.error('A fresh live quote is required to close this position.'); return }
+    if (!exitPrice || !quote?.timestamp || Date.now()/1000-quote.timestamp > 120) { toast.error('A fresh live quote is required to close this position.'); return }
     try {
       const result = await apiRequest<{ trade: SimulatedTradesRow; account: { balance: number; usedMargin: number } }>('/forex/trades/' + encodeURIComponent(trade.id) + '/close', { method: 'PATCH', body: JSON.stringify({ exitPrice }) })
       setPaperBalance(Number(result.account.balance)); setPaperMargin(Number(result.account.usedMargin))
