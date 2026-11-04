@@ -378,8 +378,10 @@ function TradingTerminal() {
       <SiteHeader
         actions={
           <>
-            <span className="hidden items-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 text-sm text-muted-foreground lg:inline-flex">
+            <span className="hidden items-center gap-3 rounded-lg border border-border bg-card px-3.5 py-2 text-sm text-muted-foreground lg:inline-flex">
               Demo balance <strong className="num font-semibold text-foreground">{paperBalance === null ? "—" : paperBalance.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 })}</strong>
+              <span className="h-5 w-px bg-border" />
+              Floating P/L <strong className={`num font-semibold ${floatingPnl >= 0 ? "text-up" : "text-down"}`}>{floatingPnl >= 0 ? "+" : ""}{floatingPnl.toFixed(2)} USD</strong>
             </span>
             {authLoading ? (
               <div className="h-10 w-24 animate-pulse rounded-lg bg-muted" />
