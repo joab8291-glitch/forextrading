@@ -285,7 +285,7 @@ function TradingTerminal() {
       return
     }
     const quantity = Number(units)
-    if (!Number.isFinite(quantity) || quantity < 1000 || quantity > 1000000) {
+    if (!Number.isSafeInteger(quantity) || quantity < 1000 || quantity > 1000000) {
       toast.error('Enter a size between 1,000 and 1,000,000 units.')
       return
     }
