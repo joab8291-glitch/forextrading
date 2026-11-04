@@ -601,7 +601,7 @@ function TradingTerminal() {
             <div className="ns-auth-bottom"><span/>SECURE TRADING ACCESS<span/></div>
           </section>
           <div className="ns-auth-footer"><span className="ns-auth-footer-mark"><Activity size={19}/></span><strong>Northstar<span>FX</span></strong><small>Practice. Learn. Trade smarter.</small></div>
-          <style>{\`
+          <style>{`
             .ns-auth-backdrop{position:fixed;inset:0;z-index:2147483647;box-sizing:border-box;min-height:100dvh;width:100%;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:max(54px,env(safe-area-inset-top)) 18px max(28px,env(safe-area-inset-bottom));color:#f4f8ff;background-color:#06142c;background-image:radial-gradient(ellipse at 50% 12%,rgba(255,184,91,.38),transparent 34%),repeating-linear-gradient(0deg,transparent 0 35px,rgba(67,119,180,.18) 35px 37px,transparent 37px 72px),repeating-linear-gradient(90deg,transparent 0 42px,rgba(64,112,171,.13) 42px 44px,transparent 44px 86px),linear-gradient(90deg,#06152e,#0a2042 50%,#06152e);font-family:Inter,ui-sans-serif,system-ui,sans-serif}
             .ns-auth-backdrop:before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,5,18,.12),rgba(0,5,18,.48)),radial-gradient(ellipse,transparent 30%,rgba(0,5,18,.5))}
             .ns-auth-close{position:fixed;z-index:3;right:18px;top:18px;width:42px;height:42px;border:1px solid #31547d;border-radius:50%;display:grid;place-items:center;background:#071a35;color:#b8d8ff;cursor:pointer}
@@ -626,7 +626,7 @@ function TradingTerminal() {
             .ns-auth-footer{position:relative;z-index:1;display:flex;align-items:center;gap:8px;margin-top:22px;color:#eaf4ff}.ns-auth-footer-mark{display:grid;place-items:center;width:28px;height:28px;border:2px solid #00e4bd;border-radius:8px;color:#00e4bd}.ns-auth-footer strong{font-size:18px}.ns-auth-footer small{margin-left:5px;color:#91a9ca;font-size:11px}
             @media(max-width:480px){.ns-auth-backdrop{justify-content:flex-start;padding-top:max(76px,env(safe-area-inset-top));padding-bottom:max(25px,env(safe-area-inset-bottom))}.ns-auth-card{padding:25px 20px 22px;border-radius:16px}.ns-auth-subtitle{margin-bottom:21px}.ns-auth-field{min-height:52px}.ns-auth-field input{height:50px}.ns-auth-footer{margin-top:18px;flex-wrap:wrap;justify-content:center}.ns-auth-footer small{flex-basis:100%;text-align:center;margin:0}}
             @media(prefers-reduced-motion:reduce){.ns-auth-field,.ns-auth-submit{transition:none}}
-          \`}</style>
+          `}</style>
         </div>,
         document.body,
       )}
