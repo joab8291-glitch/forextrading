@@ -102,6 +102,8 @@ function TradingTerminal() {
   const selectedPrice = liveQuote?.price && liveQuote.timestamp && Date.now()/1000-liveQuote.timestamp < 30 ? liveQuote.price : null
   const openTrades = trades.filter((trade) => trade.status === 'open')
   const closedTrades = trades.filter((trade) => trade.status === 'closed')
+  const floatingPnl = openTrades.reduce((sum, trade) => { const q = marketData?.quotes.find((item) => item.symbol === trade.symbol); if (!q?.timestamp || Date.now()/1000-q.timestamp > 30) return sum; const exit = trade.side === 'buy' ? Number(q.bid) : Number(q.ask); const raw = Number(trade.quantity) * (exit-Number(trade.entryPrice)) * (trade.side === 'buy' ? 1 : -1); return sum + (trade.symbol.endsWith('/USD') ? raw : raw/exit); }, 0)
+
   const chartUrl = useMemo(() => {
     const params = new URLSearchParams({
       symbol: selected.tvSymbol,
