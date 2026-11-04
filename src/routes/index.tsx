@@ -9,6 +9,10 @@ import {
   LogIn,
   LogOut,
   ShieldCheck,
+  UserRound,
+  LockKeyhole,
+  Eye,
+  EyeOff,
   Wallet,
   X,
 } from 'lucide-react'
@@ -61,6 +65,7 @@ function TradingTerminal() {
   const [authName, setAuthName] = useState('')
   const [authEmail, setAuthEmail] = useState('')
   const [authPassword, setAuthPassword] = useState('')
+  const [showAuthPassword, setShowAuthPassword] = useState(false)
   const [authBusy, setAuthBusy] = useState(false)
   const [authError, setAuthError] = useState('')
   const [authNotice, setAuthNotice] = useState('')
@@ -576,64 +581,52 @@ function TradingTerminal() {
       </main>
 
       {authOpen && createPortal(
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 2147483647, width: '100vw', height: '100vh', minHeight: '100dvh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', padding: 'max(40px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom))', background: '#0d1117', color: '#e6edf3', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif' }}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="auth-title"
-          onKeyDown={(event) => { if (event.key === 'Escape') setAuthOpen(false) }}
-        >
-          <button type="button" onClick={() => setAuthOpen(false)} aria-label="Close sign-in dialog" style={{ position: 'fixed', top: 16, right: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 6, border: '1px solid #30363d', background: '#161b22', color: '#8b949e', cursor: 'pointer' }}><X size={18}/></button>
-
-          <div style={{ display: 'flex', width: 64, height: 64, alignItems: 'center', justifyContent: 'center', borderRadius: 9999, background: '#e6edf3', color: '#0d1117', marginTop: 8 }}><Activity size={36} strokeWidth={2.5}/></div>
-
-          <h1 id="auth-title" style={{ margin: '24px 0 16px', fontSize: 24, fontWeight: 300, letterSpacing: '-0.3px', textAlign: 'center', color: '#e6edf3' }}>
-            {authMode === 'register' ? 'Create your Northstar FX account' : 'Sign in to Northstar FX'}
-          </h1>
-
-          <form onSubmit={submitAuth} style={{ width: '100%', maxWidth: 340, boxSizing: 'border-box', padding: 16, borderRadius: 6, border: '1px solid #30363d', background: '#161b22' }}>
-            {authMode === 'register' && (
-              <div style={{ marginBottom: 16 }}>
-                <label htmlFor="auth-name" style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 400, color: '#e6edf3' }}>Full name</label>
-                <input id="auth-name" required minLength={2} maxLength={80} autoComplete="name" value={authName} onChange={e => setAuthName(e.target.value)} className="gh-input" />
-              </div>
-            )}
-            <div style={{ marginBottom: 16 }}>
-              <label htmlFor="auth-email" style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 400, color: '#e6edf3' }}>{authMode === 'register' ? 'Email address' : 'Username or email address'}</label>
-              <input id="auth-email" required type="email" autoFocus autoComplete="email" inputMode="email" value={authEmail} onChange={e => setAuthEmail(e.target.value)} className="gh-input" />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label htmlFor="auth-password" style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 400, color: '#e6edf3' }}>Password</label>
-              <input id="auth-password" required type="password" minLength={authMode === 'register' ? 10 : 1} autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="gh-input" />
-              {authMode === 'register' && <p style={{ margin: '6px 0 0', fontSize: 12, color: '#8b949e' }}>Use at least 10 characters.</p>}
-            </div>
-            {authError && (
-              <div role="alert" style={{ marginBottom: 16, padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(248,81,73,0.4)', background: 'rgba(248,81,73,0.1)', color: '#ffa198', fontSize: 14, lineHeight: 1.5 }}>{authError}</div>
-            )}
-            {authNotice && (
-              <div role="status" style={{ marginBottom: 16, padding: '10px 12px', borderRadius: 6, border: '1px solid rgba(56,139,253,0.4)', background: 'rgba(56,139,253,0.1)', color: '#9ecbff', fontSize: 14, lineHeight: 1.5 }}>{authNotice}</div>
-            )}
-            <button type="submit" disabled={authBusy} className="gh-button">
-              {authBusy ? (authMode === 'register' ? 'Creating account…' : 'Signing in…') : authMode === 'register' ? 'Create account' : 'Sign in'}
-            </button>
-          </form>
-
-          <div style={{ width: '100%', maxWidth: 340, boxSizing: 'border-box', marginTop: 16, padding: 16, borderRadius: 6, border: '1px solid #30363d', textAlign: 'center', fontSize: 14, color: '#e6edf3' }}>
-            {authMode === 'register' ? 'Already have an account?' : 'New to Northstar FX?'}
-            {' '}
-            <button type="button" onClick={() => { setAuthMode(authMode === 'register' ? 'login' : 'register'); setAuthPassword(''); setAuthError(''); setAuthNotice('') }} style={{ padding: 0, border: 0, background: 'none', color: '#4493f8', font: 'inherit', cursor: 'pointer' }} className="hover:underline">
-              {authMode === 'register' ? 'Sign in' : 'Create an account'}
-            </button>
-          </div>
-
-          <style>{`
-            .gh-input { display: block; width: 100%; box-sizing: border-box; height: 40px; padding: 5px 12px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; color: #e6edf3; font-size: 16px; line-height: 20px; outline: none; transition: border-color .1s, box-shadow .1s; }
-            .gh-input:focus { border-color: #1f6feb; box-shadow: inset 0 0 0 1px #1f6feb; }
-            .gh-button { display: block; width: 100%; height: 40px; border-radius: 6px; border: 1px solid rgba(240,246,252,0.1); background: #238636; color: #fff; font-size: 16px; font-weight: 500; cursor: pointer; transition: background .1s; }
-            .gh-button:hover:not(:disabled) { background: #2ea043; }
-            .gh-button:focus-visible { outline: 2px solid #1f6feb; outline-offset: -2px; }
-            .gh-button:disabled { cursor: not-allowed; opacity: .6; }
-          `}</style>
+        <div className="ns-auth-backdrop" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+          <button type="button" onClick={() => setAuthOpen(false)} aria-label="Close sign-in dialog" className="ns-auth-close"><X size={20}/></button>
+          <div className="ns-auth-lamp" aria-hidden="true"><span /></div>
+          <section className="ns-auth-card">
+            <div className="ns-auth-brand"><span className="ns-auth-mark"><Activity size={25}/></span><span>NORTHSTAR <b>FX</b></span></div>
+            <h1 id="auth-title">{authMode === 'register' ? 'Create account' : 'Login'}</h1>
+            <p className="ns-auth-subtitle">{authMode === 'register' ? 'Start your trading practice journey' : 'Welcome back. Sign in to continue.'}</p>
+            <form onSubmit={submitAuth} className="ns-auth-form">
+              {authMode === 'register' && <label className="ns-auth-field"><UserRound size={20}/><input required minLength={2} maxLength={80} autoComplete="name" placeholder="Full name" aria-label="Full name" value={authName} onChange={e => setAuthName(e.target.value)}/></label>}
+              <label className="ns-auth-field"><UserRound size={20}/><input required type="email" autoFocus autoComplete="email" inputMode="email" placeholder="Email address" aria-label="Email address" value={authEmail} onChange={e => setAuthEmail(e.target.value)}/></label>
+              <label className="ns-auth-field"><LockKeyhole size={20}/><input required type={showAuthPassword ? 'text' : 'password'} minLength={authMode === 'register' ? 10 : 1} autoComplete={authMode === 'register' ? 'new-password' : 'current-password'} placeholder="Password" aria-label="Password" value={authPassword} onChange={e => setAuthPassword(e.target.value)}/><button type="button" className="ns-auth-eye" aria-label={showAuthPassword ? 'Hide password' : 'Show password'} onClick={() => setShowAuthPassword(v => !v)}>{showAuthPassword ? <EyeOff size={20}/> : <Eye size={20}/>}</button></label>
+              {authMode === 'register' && <p className="ns-auth-hint">Use at least 10 characters for your password.</p>}
+              {authError && <div role="alert" className="ns-auth-error">{authError}</div>}
+              {authNotice && <div role="status" className="ns-auth-notice">{authNotice}</div>}
+              <button type="submit" disabled={authBusy} className="ns-auth-submit">{authBusy ? (authMode === 'register' ? 'Creating account…' : 'Signing in…') : authMode === 'register' ? 'Create account' : 'Login'}</button>
+            </form>
+            <p className="ns-auth-switch">{authMode === 'register' ? 'Already have an account?' : "Don't have an account?"}{' '}<button type="button" onClick={() => {setAuthMode(authMode === 'register' ? 'login' : 'register');setAuthPassword('');setAuthError('');setAuthNotice('')}}>{authMode === 'register' ? 'Login' : 'Register'}</button></p>
+            <div className="ns-auth-bottom"><span/>SECURE TRADING ACCESS<span/></div>
+          </section>
+          <div className="ns-auth-footer"><span className="ns-auth-footer-mark"><Activity size={19}/></span><strong>Northstar<span>FX</span></strong><small>Practice. Learn. Trade smarter.</small></div>
+          <style>{\`
+            .ns-auth-backdrop{position:fixed;inset:0;z-index:2147483647;box-sizing:border-box;min-height:100dvh;width:100%;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:max(54px,env(safe-area-inset-top)) 18px max(28px,env(safe-area-inset-bottom));color:#f4f8ff;background-color:#06142c;background-image:radial-gradient(ellipse at 50% 12%,rgba(255,184,91,.38),transparent 34%),repeating-linear-gradient(0deg,transparent 0 35px,rgba(67,119,180,.18) 35px 37px,transparent 37px 72px),repeating-linear-gradient(90deg,transparent 0 42px,rgba(64,112,171,.13) 42px 44px,transparent 44px 86px),linear-gradient(90deg,#06152e,#0a2042 50%,#06152e);font-family:Inter,ui-sans-serif,system-ui,sans-serif}
+            .ns-auth-backdrop:before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,5,18,.12),rgba(0,5,18,.48)),radial-gradient(ellipse,transparent 30%,rgba(0,5,18,.5))}
+            .ns-auth-close{position:fixed;z-index:3;right:18px;top:18px;width:42px;height:42px;border:1px solid #31547d;border-radius:50%;display:grid;place-items:center;background:#071a35;color:#b8d8ff;cursor:pointer}
+            .ns-auth-lamp{position:absolute;top:0;left:50%;transform:translateX(-50%);width:220px;height:85px;pointer-events:none;display:flex;justify-content:center}
+            .ns-auth-lamp:before{content:"";position:absolute;top:0;width:100%;height:55px;background:linear-gradient(#020817,#18304b);clip-path:polygon(12% 0,88% 0,100% 100%,0 100%)}
+            .ns-auth-lamp span{position:absolute;top:38px;width:78px;height:7px;background:#ffe1a0;box-shadow:0 0 12px 5px #ffbd69,0 0 55px 24px rgba(255,176,78,.28)}
+            .ns-auth-card{position:relative;z-index:1;width:min(100%,440px);box-sizing:border-box;margin:auto 0;padding:30px;border:1px solid #2788ed;border-radius:18px;background:linear-gradient(145deg,rgba(30,48,78,.96),rgba(7,24,52,.98));box-shadow:0 24px 80px #0009,0 0 32px #0089ff26,inset 0 1px #ffffff20;backdrop-filter:blur(16px)}
+            .ns-auth-brand{display:flex;align-items:center;justify-content:center;gap:9px;color:#dceaff;font-size:12px;font-weight:800;letter-spacing:2.5px}.ns-auth-brand b,.ns-auth-footer strong span{color:#00e4bd}
+            .ns-auth-mark{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;color:#00e6d0;background:#00d8cb1a;border:1px solid #00e2d155}
+            .ns-auth-card h1{margin:18px 0 5px;text-align:center;font-size:clamp(40px,9vw,49px);line-height:1.08;font-weight:800;letter-spacing:-1.8px;background:linear-gradient(95deg,#16caff,#00f0b5);-webkit-background-clip:text;background-clip:text;color:transparent}
+            .ns-auth-subtitle{margin:0 0 25px;text-align:center;color:#a8bddb;font-size:14px;line-height:1.55}.ns-auth-form{display:flex;flex-direction:column;gap:15px}
+            .ns-auth-field{min-height:54px;box-sizing:border-box;display:flex;align-items:center;gap:13px;padding:0 17px;border:1px solid #63a3e180;border-radius:999px;background:#02112999;color:#00d9ed;transition:.18s}
+            .ns-auth-field:focus-within{border-color:#00dcca;box-shadow:0 0 0 3px #00dcca20,0 0 20px #00b9ff20;background:#031631}
+            .ns-auth-field input{width:100%;min-width:0;height:52px;padding:0;border:0;outline:0;background:transparent;color:#f5f8ff;font:inherit;font-size:16px}.ns-auth-field input::placeholder{color:#d0d9e8;opacity:.94}
+            .ns-auth-eye{display:grid;place-items:center;padding:5px;border:0;background:transparent;color:#00d8ed;cursor:pointer}
+            .ns-auth-hint{margin:-7px 4px 0;color:#9eb5d5;font-size:12px}.ns-auth-error,.ns-auth-notice{padding:11px 13px;border-radius:11px;font-size:13px;line-height:1.5}
+            .ns-auth-error{border:1px solid #ff707d73;background:#73182b4d;color:#ffc1c8}.ns-auth-notice{border:1px solid #49a6ff66;background:#164e8547;color:#b9dcff}
+            .ns-auth-submit{height:54px;margin-top:3px;border:0;border-radius:999px;background:linear-gradient(100deg,#10bdf3,#00e4a9);color:#03152d;font-size:17px;font-weight:750;cursor:pointer;box-shadow:0 8px 24px #00c9ca33;transition:transform .18s,filter .18s}
+            .ns-auth-submit:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px)}.ns-auth-submit:disabled{opacity:.65;cursor:wait}
+            .ns-auth-switch{margin:20px 0 0;text-align:center;color:#c5d2e6;font-size:14px}.ns-auth-switch button{padding:0;border:0;background:transparent;color:#00e5bd;font:inherit;font-weight:750;cursor:pointer}
+            .ns-auth-bottom{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:24px;color:#00d9e8;font-size:11px;font-weight:800;letter-spacing:2px}.ns-auth-bottom span{height:1px;flex:1;background:linear-gradient(90deg,transparent,#00bde9)}.ns-auth-bottom span:last-child{background:linear-gradient(90deg,#00bde9,transparent)}
+            .ns-auth-footer{position:relative;z-index:1;display:flex;align-items:center;gap:8px;margin-top:22px;color:#eaf4ff}.ns-auth-footer-mark{display:grid;place-items:center;width:28px;height:28px;border:2px solid #00e4bd;border-radius:8px;color:#00e4bd}.ns-auth-footer strong{font-size:18px}.ns-auth-footer small{margin-left:5px;color:#91a9ca;font-size:11px}
+            @media(max-width:480px){.ns-auth-backdrop{justify-content:flex-start;padding-top:max(76px,env(safe-area-inset-top));padding-bottom:max(25px,env(safe-area-inset-bottom))}.ns-auth-card{padding:25px 20px 22px;border-radius:16px}.ns-auth-subtitle{margin-bottom:21px}.ns-auth-field{min-height:52px}.ns-auth-field input{height:50px}.ns-auth-footer{margin-top:18px;flex-wrap:wrap;justify-content:center}.ns-auth-footer small{flex-basis:100%;text-align:center;margin:0}}
+            @media(prefers-reduced-motion:reduce){.ns-auth-field,.ns-auth-submit{transition:none}}
+          \`}</style>
         </div>,
         document.body,
       )}
