@@ -77,6 +77,8 @@ function TradingTerminal() {
   const [depositRequestId, setDepositRequestId] = useState<string | null>(null)
   const [depositMessage, setDepositMessage] = useState('')
   const [walletBalance, setWalletBalance] = useState<number | null>(null)
+  const [paperBalance, setPaperBalance] = useState<number | null>(null)
+  const [paperMargin, setPaperMargin] = useState<number>(0)
   const mpesaApiBase = (import.meta.env.VITE_MPESA_API_URL || 'https://webazi-digital-solutions.onrender.com').replace(/\/$/, '')
 
   const selected = PAIRS.find((pair) => pair.symbol === selectedSymbol) ?? PAIRS[0]
@@ -144,6 +146,19 @@ function TradingTerminal() {
   useEffect(() => {
     if (tradesError) toast.error(tradesLoadError instanceof Error ? tradesLoadError.message : 'Could not load your paper trades.')
   }, [tradesError, tradesLoadError])
+
+  useEffect(() => {
+    let active = true
+    async function loadPaperAccount() {
+      if (!user) { setPaperBalance(null); setPaperMargin(0); return }
+      try {
+        const account = await apiRequest<{ account: { balance: number; usedMargin: number } }>('/forex/account')
+        if (active) { setPaperBalance(Number(account.account.balance)); setPaperMargin(Number(account.account.usedMargin)) }
+      } catch { if (active) toast.error('Could not load your demo trading balance.') }
+    }
+    void loadPaperAccount()
+    return () => { active = false }
+  }, [user?.id])
 
   useEffect(() => {
     let active = true
@@ -275,7 +290,7 @@ function TradingTerminal() {
 
   async function signOut() {
     try { await apiRequest('/forex/auth/logout', { method: 'POST' }) } catch { /* clear local session even if offline */ }
-    clearToken(); setUser(null); setWalletBalance(null); await refreshTrades(); toast.success('You have signed out.')
+    clearToken(); setUser(null); setWalletBalance(null); setPaperBalance(null); setPaperMargin(0); await refreshTrades(); toast.success('You have signed out.')
   }
 
   async function placePaperTrade(event: FormEvent<HTMLFormElement>) {
@@ -308,7 +323,8 @@ function TradingTerminal() {
       if (!saved.trade?.id || saved.trade.status !== 'open' || saved.trade.userId !== user.id) {
         throw new Error('The server did not confirm that this practice trade was saved to your account.')
       }
-      const refreshed = await refreshTrades()
+      const [refreshed, accountResult] = await Promise.all([refreshTrades(), apiRequest<{ account: { balance: number; usedMargin: number } }>("/forex/account")])
+      setPaperBalance(Number(accountResult.account.balance)); setPaperMargin(Number(accountResult.account.usedMargin))
       if (refreshed.isError) {
         toast.warning('Trade saved successfully, but the positions list could not refresh. Use Refresh to reload it.')
       } else {
@@ -324,9 +340,11 @@ function TradingTerminal() {
   async function closePaperTrade(trade: SimulatedTradesRow) {
     if (!user) return
     try {
-      await apiRequest('/forex/trades/' + encodeURIComponent(trade.id) + '/close', { method: 'PATCH', body: JSON.stringify({ exitPrice: pairPrice(trade.symbol) }) })
+      const result = await apiRequest<{ trade: SimulatedTradesRow; account: { balance: number; usedMargin: number } }>('/forex/trades/' + encodeURIComponent(trade.id) + '/close', { method: 'PATCH', body: JSON.stringify({ exitPrice: pairPrice(trade.symbol) }) })
+      setPaperBalance(Number(result.account.balance)); setPaperMargin(Number(result.account.usedMargin))
       await refreshTrades()
-      toast.success(`${trade.symbol} paper position closed.`)
+      const pnl = Number(result.trade.realizedPnlUsd ?? 0)
+      toast.success(`${trade.symbol} closed: ${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)} realised.`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not close this paper position.')
     }
@@ -346,7 +364,7 @@ function TradingTerminal() {
         actions={
           <>
             <span className="hidden items-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 text-sm text-muted-foreground lg:inline-flex">
-              Practice balance <strong className="num font-semibold text-foreground">$100,000</strong>
+              Demo balance <strong className="num font-semibold text-foreground">{paperBalance === null ? "—" : paperBalance.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 })}</strong>
             </span>
             {authLoading ? (
               <div className="h-10 w-24 animate-pulse rounded-lg bg-muted" />
