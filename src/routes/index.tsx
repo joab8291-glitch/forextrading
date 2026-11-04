@@ -301,9 +301,19 @@ function TradingTerminal() {
     }
     setSavingTrade(true)
     try {
-      await apiRequest('/forex/trades', { method: 'POST', body: JSON.stringify({ symbol: selected.symbol, side, quantity, entryPrice: selected.price, stopLoss: stop, takeProfit: target }) })
-      await refreshTrades()
-      toast.success(`${side === 'buy' ? 'Long' : 'Short'} ${selected.symbol} added to paper positions.`)
+      const saved = await apiRequest<{ trade: SimulatedTradesRow }>('/forex/trades', {
+        method: 'POST',
+        body: JSON.stringify({ symbol: selected.symbol, side, quantity, entryPrice: selected.price, stopLoss: stop, takeProfit: target }),
+      })
+      if (!saved.trade?.id || saved.trade.status !== 'open' || saved.trade.userId !== user.id) {
+        throw new Error('The server did not confirm that this practice trade was saved to your account.')
+      }
+      const refreshed = await refreshTrades()
+      if (refreshed.isError) {
+        toast.warning('Trade saved successfully, but the positions list could not refresh. Use Refresh to reload it.')
+      } else {
+        toast.success(`${side === 'buy' ? 'Long' : 'Short'} ${selected.symbol} saved to your open positions.`)
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Your paper trade could not be saved.')
     } finally {
