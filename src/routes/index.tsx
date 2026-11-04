@@ -91,6 +91,15 @@ function TradingTerminal() {
       return result.trades
     },
   })
+  const { data: marketData } = useQuery({
+    queryKey: ['forex_live_quotes'],
+    queryFn: () => apiRequest<{ quotes: Array<{ symbol:string; price:number|null; bid:number|null; ask:number|null; timestamp:number|null }>; streaming:boolean }>('/forex/quotes'),
+    refetchInterval: 3000,
+    refetchIntervalInBackground: true,
+    staleTime: 1000,
+  })
+  const liveQuote = marketData?.quotes.find((quote) => quote.symbol === selectedSymbol)
+  const selectedPrice = liveQuote?.price && liveQuote.timestamp && Date.now()/1000-liveQuote.timestamp < 30 ? liveQuote.price : null
   const openTrades = trades.filter((trade) => trade.status === 'open')
   const closedTrades = trades.filter((trade) => trade.status === 'closed')
   const chartUrl = useMemo(() => {
@@ -310,7 +319,8 @@ function TradingTerminal() {
       toast.error('Stop loss and take profit must be positive prices.')
       return
     }
-    if ((side === 'buy' && ((stop !== null && stop >= selected.price) || (target !== null && target <= selected.price))) || (side === 'sell' && ((stop !== null && stop <= selected.price) || (target !== null && target >= selected.price)))) {
+    if (selectedPrice === null) { toast.error('Live market price is unavailable. Wait for a fresh quote before placing a practice trade.'); return }
+    if ((side === 'buy' && ((stop !== null && stop >= selectedPrice) || (target !== null && target <= selectedPrice))) || (side === 'sell' && ((stop !== null && stop <= selectedPrice) || (target !== null && target >= selectedPrice)))) {
       toast.error(side === 'buy' ? 'For a long paper trade, stop loss must be below entry and take profit above it.' : 'For a short paper trade, stop loss must be above entry and take profit below it.')
       return
     }
@@ -318,7 +328,7 @@ function TradingTerminal() {
     try {
       const saved = await apiRequest<{ trade: SimulatedTradesRow }>('/forex/trades', {
         method: 'POST',
-        body: JSON.stringify({ symbol: selected.symbol, side, quantity, entryPrice: selected.price, stopLoss: stop, takeProfit: target }),
+        body: JSON.stringify({ symbol: selected.symbol, side, quantity, entryPrice: selectedPrice, stopLoss: stop, takeProfit: target }),
       })
       if (!saved.trade?.id || saved.trade.status !== 'open' || saved.trade.userId !== user.id) {
         throw new Error('The server did not confirm that this practice trade was saved to your account.')
@@ -339,8 +349,11 @@ function TradingTerminal() {
 
   async function closePaperTrade(trade: SimulatedTradesRow) {
     if (!user) return
+    const quote = marketData?.quotes.find((item) => item.symbol === trade.symbol)
+    const exitPrice = trade.side === 'buy' ? quote?.bid : quote?.ask
+    if (!exitPrice || !quote?.timestamp || Date.now()/1000-quote.timestamp > 30) { toast.error('A fresh live quote is required to close this position.'); return }
     try {
-      const result = await apiRequest<{ trade: SimulatedTradesRow; account: { balance: number; usedMargin: number } }>('/forex/trades/' + encodeURIComponent(trade.id) + '/close', { method: 'PATCH', body: JSON.stringify({ exitPrice: pairPrice(trade.symbol) }) })
+      const result = await apiRequest<{ trade: SimulatedTradesRow; account: { balance: number; usedMargin: number } }>('/forex/trades/' + encodeURIComponent(trade.id) + '/close', { method: 'PATCH', body: JSON.stringify({ exitPrice }) })
       setPaperBalance(Number(result.account.balance)); setPaperMargin(Number(result.account.usedMargin))
       await refreshTrades()
       const pnl = Number(result.trade.realizedPnlUsd ?? 0)
@@ -353,7 +366,7 @@ function TradingTerminal() {
   const isUp = selected.change >= 0
   const units_n = Number(units) || 0
   const lots = units_n / 100000
-  const positionValue = units_n * selected.price
+  const positionValue = selectedPrice === null ? 0 : units_n * selectedPrice
   const quoteCurrency = selected.symbol.split('/')[1]
   const shown = activeView === 'open' ? openTrades : closedTrades
   const sideTone = side === 'buy' ? 'bg-up text-[#04120d] hover:brightness-110' : 'bg-down text-[#1c0508] hover:brightness-110'
@@ -388,11 +401,11 @@ function TradingTerminal() {
               <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{selected.symbol}</h1>
               <span className="rounded-md bg-secondary px-2.5 py-1 text-sm font-medium text-muted-foreground">Spot forex</span>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">Indicative quote. Chart data comes from OANDA through TradingView.</p>
+            <p className="mt-2 text-sm text-muted-foreground">{marketData?.streaming ? 'Live prices streamed from Twelve Data.' : 'Live market feed is not configured. Practice orders are disabled until fresh quotes arrive.'}</p>
           </div>
           <div className="flex flex-wrap items-end gap-x-10 gap-y-4">
             <div>
-              <div className="num text-4xl font-semibold tracking-tight sm:text-5xl">{formatPrice(selected.price, selected.symbol)}</div>
+              <div className="num text-4xl font-semibold tracking-tight sm:text-5xl">{selectedPrice === null ? 'Waiting for live quote…' : formatPrice(selectedPrice, selected.symbol)}</div>
               <div className={`mt-1 inline-flex items-center gap-1 text-sm font-medium ${isUp ? 'text-up' : 'text-down'}`}>
                 {isUp ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
                 <span className="num">{isUp ? '+' : ''}{selected.change.toFixed(2)}% today</span>
@@ -440,11 +453,11 @@ function TradingTerminal() {
                     >
                       <span className="min-w-0">
                         <span className={`block text-sm font-semibold ${active ? 'text-accent-foreground' : ''}`}>{pair.symbol}</span>
-                        <span className="num mt-0.5 block text-sm text-muted-foreground">{formatPrice(pair.price, pair.symbol)}</span>
+                        <span className="num mt-0.5 block text-sm text-muted-foreground">{(() => { const q = marketData?.quotes.find((item) => item.symbol === pair.symbol); return q?.price && q.timestamp && Date.now()/1000-q.timestamp < 30 ? formatPrice(q.price,pair.symbol) : '—' })()}</span>
                       </span>
                       <span className={`num inline-flex items-center gap-1 text-sm font-medium ${up ? 'text-up' : 'text-down'}`}>
                         {up ? <ArrowUpRight size={15} /> : <ArrowDownRight size={15} />}
-                        {up ? '+' : ''}{pair.change.toFixed(2)}%
+                        {marketData?.streaming ? 'Live' : '—'}
                       </span>
                     </button>
                   </li>
@@ -467,7 +480,7 @@ function TradingTerminal() {
             </div>
             <div className="flex items-center gap-2 border-t border-border px-5 py-3 text-sm text-muted-foreground">
               <ShieldCheck size={16} className="shrink-0 text-primary" />
-              Practice environment. Quotes in the trade ticket are indicative samples.
+              Practice environment. Trade execution and risk checks use the backend live quote feed.
             </div>
           </section>
 
@@ -504,7 +517,7 @@ function TradingTerminal() {
                 </div>
 
                 <dl className="space-y-3 rounded-xl bg-background p-4 text-sm">
-                  <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Entry price</dt><dd className="num font-medium">{formatPrice(selected.price, selected.symbol)}</dd></div>
+                  <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Entry price</dt><dd className="num font-medium">{formatPrice((selectedPrice ?? 0), selected.symbol)}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Size in lots</dt><dd className="num font-medium">{lots.toLocaleString(undefined, { maximumFractionDigits: 2 })}</dd></div>
                   <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Position value</dt><dd className="num font-medium">{positionValue.toLocaleString(undefined, { maximumFractionDigits: 0 })} {quoteCurrency}</dd></div>
                 </dl>
@@ -667,6 +680,3 @@ function formatPrice(price: number, symbol: string) {
   return price.toFixed(digits)
 }
 
-function pairPrice(symbol: string) {
-  return PAIRS.find((pair) => pair.symbol === symbol)?.price ?? 0
-}
