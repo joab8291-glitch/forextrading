@@ -10,6 +10,8 @@ export type SimulatedTradesRow = {
   entryPrice: number | string
   stopLoss: number | string | null
   takeProfit: number | string | null
+  marginRequired?: number | string
+  realizedPnlUsd?: number | string | null
   status: string
   exitPrice: number | string | null
   createdAt: string
